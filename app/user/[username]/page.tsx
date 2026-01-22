@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
 import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 type UserProfile = {
   id: string;
@@ -34,8 +34,11 @@ type UserStats = {
   avgScore: number;
 };
 
-export default function UserProfilePage({ params }: { params: { username: string } }) {
+export default function UserProfilePage() {
   const router = useRouter();
+  const params = useParams();
+  const username = params?.username as string;
+
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [photos, setPhotos] = useState<UserPhoto[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -43,8 +46,10 @@ export default function UserProfilePage({ params }: { params: { username: string
   const [isOwnProfile, setIsOwnProfile] = useState(false);
 
   useEffect(() => {
-    fetchUserProfile();
-  }, [params.username]);
+    if (username) {
+      fetchUserProfile();
+    }
+  }, [username]);
 
   const fetchUserProfile = async () => {
     try {
@@ -57,7 +62,7 @@ export default function UserProfilePage({ params }: { params: { username: string
       const { data: profileData, error: profileError } = await supabase
         .from("user_profiles")
         .select("*")
-        .eq("username", params.username)
+        .eq("username", decodeURIComponent(username)) // Ensure encoded characters are handled
         .single();
 
       if (profileError) throw profileError;
