@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, Crown } from "lucide-react";
+import Link from "next/link";
 
 type Photo = {
   id: string;
@@ -13,6 +14,8 @@ type Photo = {
   matches: number;
   users?: {
     email: string;
+    username: string;
+    display_name: string;
   } | null;
 };
 
@@ -67,7 +70,7 @@ export default function LeaderboardPage() {
           wins, 
           matches,
           user_id,
-          users!inner(email)
+          users!inner(email, username, display_name)
         `)
         .order("score", { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
@@ -81,7 +84,11 @@ export default function LeaderboardPage() {
         score: item.score,
         wins: item.wins,
         matches: item.matches,
-        users: item.users ? { email: item.users.email } : null
+        users: item.users ? {
+          email: item.users.email,
+          username: item.users.username,
+          display_name: item.users.display_name
+        } : null
       }));
 
       setPhotos(transformedData);
@@ -189,9 +196,19 @@ export default function LeaderboardPage() {
 
                   {/* Uploader Info */}
                   <div className="hidden md:flex flex-col min-w-0 flex-shrink">
-                    <div className="text-sm font-semibold text-white/80 truncate">
-                      {photo.users?.email ? photo.users.email.split('@')[0] : 'Anonymous'}
-                    </div>
+                    {photo.users?.username ? (
+                      <Link
+                        href={`/user/${photo.users.username}`}
+                        className="text-sm font-semibold text-white/80 hover:text-pink-400 truncate transition"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {photo.users.display_name}
+                      </Link>
+                    ) : (
+                      <div className="text-sm font-semibold text-white/80 truncate">
+                        Anonymous
+                      </div>
+                    )}
                     <div className="text-xs text-white/40 uppercase tracking-wider font-semibold">Uploader</div>
                   </div>
 
