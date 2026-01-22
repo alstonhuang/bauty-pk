@@ -1,0 +1,246 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { motion, Variants, AnimatePresence } from "framer-motion";
+import { Trophy, Medal, Crown } from "lucide-react";
+
+type Photo = {
+  id: string;
+  url: string;
+  score: number;
+  wins: number;
+  matches: number;
+};
+
+const listVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.05
+    }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { x: -20, opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1
+  }
+};
+
+export default function LeaderboardPage() {
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, []);
+
+  const fetchLeaderboard = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("photos")
+        .select("id, url, score, wins, matches")
+        .order("score", { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+      setPhotos(data || []);
+    } catch (err) {
+      console.error("Error fetching leaderboard:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getRankStyle = (index: number) => {
+    if (index === 0) return "border-yellow-500/50 bg-yellow-500/10 shadow-[0_0_30px_-5px_rgba(234,179,8,0.2)]";
+    if (index === 1) return "border-gray-400/50 bg-gray-400/10 shadow-[0_0_30px_-5px_rgba(156,163,175,0.2)]";
+    if (index === 2) return "border-orange-500/50 bg-orange-500/10 shadow-[0_0_30px_-5px_rgba(249,115,22,0.2)]";
+    return "border-transparent hover:border-white/10 hover:bg-white/5";
+  };
+
+  const RenderRankIcon = ({ index }: { index: number }) => {
+    if (index === 0) return (
+      <div className="relative">
+        <Crown className="w-8 h-8 text-yellow-400 fill-yellow-400/20" />
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-black rounded-full flex items-center justify-center text-xs font-black">1</div>
+      </div>
+    );
+    if (index === 1) return (
+      <div className="relative">
+        <Medal className="w-8 h-8 text-gray-300 fill-gray-300/20" />
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-300 text-black rounded-full flex items-center justify-center text-xs font-black">2</div>
+      </div>
+    );
+    if (index === 2) return (
+      <div className="relative">
+        <Medal className="w-8 h-8 text-orange-400 fill-orange-400/20" />
+        <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-400 text-black rounded-full flex items-center justify-center text-xs font-black">3</div>
+      </div>
+    );
+    return <span className="font-mono text-xl text-white/40">#{index + 1}</span>;
+  };
+
+  return (
+    <div className="container min-h-screen py-20 px-4 max-w-4xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center mb-12"
+      >
+        <h1 className="text-5xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-pink-400 to-purple-500 pb-2">
+          Leaderboard
+        </h1>
+        <p className="text-white/60 text-lg">The world's most stunning visuals, ranked by you.</p>
+      </motion.div>
+
+      <div className="flex flex-col gap-4">
+        {loading ? (
+          // Skeleton Loading
+          Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="glass-panel h-24 w-full animate-pulse flex items-center px-6 gap-6"
+            >
+              <div className="w-8 h-8 bg-white/10 rounded-full" />
+              <div className="w-16 h-16 bg-white/10 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-white/10 rounded w-1/3" />
+                <div className="h-3 bg-white/10 rounded w-1/4" />
+              </div>
+            </div>
+          ))
+        ) : (
+          <motion.div
+            variants={listVariants}
+            initial="hidden"
+            animate="visible"
+            className="flex flex-col gap-4"
+          >
+            {photos.map((photo, index) => {
+              const winRate = photo.matches > 0 ? Math.round((photo.wins / photo.matches) * 100) : 0;
+
+              return (
+                <motion.div
+                  key={photo.id}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
+                  className={`glass-panel p-4 flex items-center gap-4 md:gap-6 transition-colors cursor-pointer ${getRankStyle(index)}`}
+                  onClick={() => setSelectedPhoto(photo)}
+                >
+                  {/* Rank */}
+                  <div className="w-12 md:w-16 flex-shrink-0 flex justify-center items-center">
+                    <RenderRankIcon index={index} />
+                  </div>
+
+                  {/* Photo (Circular Avatar) */}
+                  <div className={`relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center rounded-full overflow-hidden ring-2 ${index === 0 ? 'ring-yellow-400 shadow-lg shadow-yellow-400/20' :
+                    index === 1 ? 'ring-gray-300' :
+                      index === 2 ? 'ring-orange-400' : 'ring-white/10'
+                    }`}>
+                    <img
+                      src={photo.url}
+                      alt={`Rank ${index + 1}`}
+                      className="w-full h-full object-cover transform transition-transform duration-500 hover:scale-110"
+                    />
+                  </div>
+
+                  {/* Mobile Stats (Hidden on Desktop) */}
+                  <div className="flex-1 flex items-center justify-end md:hidden">
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-yellow-400 text-shadow-glow font-mono">
+                        {photo.score.toLocaleString()}
+                      </div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Points</div>
+                    </div>
+                  </div>
+
+                  {/* Desktop Stats Grid */}
+                  <div className="hidden md:flex flex-1 items-center justify-end gap-8">
+                    <div className="text-right min-w-[100px]">
+                      <div className="text-3xl font-bold text-yellow-400 text-shadow-glow font-mono">
+                        {photo.score.toLocaleString()}
+                      </div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Points</div>
+                    </div>
+
+                    <div className="text-right min-w-[80px]">
+                      <div className={`text-2xl font-bold font-mono ${winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
+                        {winRate}%
+                      </div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Win Rate</div>
+                    </div>
+
+                    <div className="text-right min-w-[80px]">
+                      <div className="text-2xl font-bold text-white/60 font-mono">
+                        {photo.matches}
+                      </div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Matches</div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
+
+        {!loading && photos.length === 0 && (
+          <div className="text-center py-20 text-white/50 bg-white/5 rounded-2xl border border-dashed border-white/10">
+            <Trophy className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p className="mb-4">No champions yet.</p>
+            <a href="/upload" className="text-primary hover:text-primary-glow font-bold hover:underline">Be the first to upload!</a>
+          </div>
+        )}
+      </div>
+
+      {/* Gallery Modal */}
+      <AnimatePresence>
+        {selectedPhoto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+            onClick={() => setSelectedPhoto(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-5xl max-h-[90vh] w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img
+                src={selectedPhoto.url}
+                alt="Full size"
+                className="w-full h-full object-contain rounded-lg shadow-2xl"
+              />
+              <button
+                onClick={() => setSelectedPhoto(null)}
+                className="absolute top-4 right-4 w-10 h-10 bg-black/50 backdrop-blur-md rounded-full text-white/80 hover:text-white hover:bg-black/70 transition flex items-center justify-center"
+              >
+                ✕
+              </button>
+              <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-md rounded-lg p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-2xl font-bold text-yellow-400 font-mono">{selectedPhoto.score.toLocaleString()} Points</div>
+                    <div className="text-sm text-white/60">
+                      {selectedPhoto.wins} wins • {selectedPhoto.matches} matches
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
