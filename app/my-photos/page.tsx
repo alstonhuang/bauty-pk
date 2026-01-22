@@ -104,7 +104,7 @@ export default function MyPhotosPage() {
           className="text-center mb-12"
         >
           <h1 className="text-5xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 pb-2">
-            My Gallery
+            My Photos
           </h1>
           <p className="text-white/60 text-lg">Manage your uploaded photos and track their performance.</p>
         </motion.div>
@@ -256,8 +256,8 @@ export default function MyPhotosPage() {
                   <div className="text-right">
                     <div className="text-sm text-white/40 mb-1">Win Rate</div>
                     <div className={`text-2xl font-bold font-mono ${selectedPhoto.matches > 0 && Math.round((selectedPhoto.wins / selectedPhoto.matches) * 100) >= 50
-                        ? 'text-green-400'
-                        : 'text-white/60'
+                      ? 'text-green-400'
+                      : 'text-white/60'
                       }`}>
                       {selectedPhoto.matches > 0 ? Math.round((selectedPhoto.wins / selectedPhoto.matches) * 100) : 0}%
                     </div>

@@ -11,6 +11,9 @@ type Photo = {
   score: number;
   wins: number;
   matches: number;
+  users?: {
+    email: string;
+  };
 };
 
 const listVariants: Variants = {
@@ -45,7 +48,7 @@ export default function LeaderboardPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("photos")
-        .select("id, url, score, wins, matches")
+        .select("id, url, score, wins, matches, users(email)")
         .order("score", { ascending: false })
         .limit(50);
 
@@ -151,8 +154,16 @@ export default function LeaderboardPage() {
                     />
                   </div>
 
+                  {/* Uploader Info */}
+                  <div className="hidden md:flex flex-col min-w-0 flex-shrink">
+                    <div className="text-sm font-medium text-white/80 truncate">
+                      {photo.users?.email ? photo.users.email.split('@')[0] : 'Anonymous'}
+                    </div>
+                    <div className="text-xs text-white/40">Uploader</div>
+                  </div>
+
                   {/* Mobile Stats (Hidden on Desktop) */}
-                  <div className="flex-1 flex items-center justify-end md:hidden">
+                  <div className="flex-1 flex items-center justify-end md:hidden min-w-0">
                     <div className="text-right">
                       <div className="text-2xl font-bold text-yellow-400 text-shadow-glow font-mono">
                         {photo.score.toLocaleString()}
@@ -162,22 +173,22 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* Desktop Stats Grid */}
-                  <div className="hidden md:flex flex-1 items-center justify-end gap-8">
-                    <div className="text-right min-w-[100px]">
+                  <div className="hidden md:flex flex-1 items-center justify-end gap-6 min-w-0">
+                    <div className="text-right min-w-[100px] flex-shrink-0">
                       <div className="text-3xl font-bold text-yellow-400 text-shadow-glow font-mono">
                         {photo.score.toLocaleString()}
                       </div>
                       <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Points</div>
                     </div>
 
-                    <div className="text-right min-w-[80px]">
+                    <div className="text-right min-w-[80px] flex-shrink-0">
                       <div className={`text-2xl font-bold font-mono ${winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
                         {winRate}%
                       </div>
                       <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Win Rate</div>
                     </div>
 
-                    <div className="text-right min-w-[80px]">
+                    <div className="text-right min-w-[80px] flex-shrink-0">
                       <div className="text-2xl font-bold text-white/60 font-mono">
                         {photo.matches}
                       </div>
@@ -223,16 +234,26 @@ export default function LeaderboardPage() {
               />
               <button
                 onClick={() => setSelectedPhoto(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-black/50 backdrop-blur-md rounded-full text-white/80 hover:text-white hover:bg-black/70 transition flex items-center justify-center"
+                className="absolute top-4 right-4 w-12 h-12 bg-black/70 backdrop-blur-md rounded-full text-white/80 hover:text-white hover:bg-black/90 transition flex items-center justify-center text-2xl font-light border border-white/20 z-10"
               >
                 ✕
               </button>
-              <div className="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-md rounded-lg p-4 text-white">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-2xl font-bold text-yellow-400 font-mono">{selectedPhoto.score.toLocaleString()} Points</div>
-                    <div className="text-sm text-white/60">
-                      {selectedPhoto.wins} wins • {selectedPhoto.matches} matches
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/95 to-transparent rounded-b-lg p-6 pt-12">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-3xl font-bold text-yellow-400 font-mono mb-2">
+                      {selectedPhoto.score.toLocaleString()} <span className="text-lg text-white/60">Points</span>
+                    </div>
+                    <div className="text-sm text-white/60 flex flex-wrap gap-x-3 gap-y-1">
+                      <span>{selectedPhoto.wins} wins</span>
+                      <span>•</span>
+                      <span>{selectedPhoto.matches} matches</span>
+                      {selectedPhoto.users?.email && (
+                        <>
+                          <span>•</span>
+                          <span className="truncate max-w-[200px]">by {selectedPhoto.users.email.split('@')[0]}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
