@@ -38,14 +38,26 @@ export default function LeaderboardPage() {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     fetchLeaderboard();
-  }, []);
+  }, [currentPage]);
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
+
+      // Get total count
+      const { count } = await supabase
+        .from("photos")
+        .select("*", { count: 'exact', head: true });
+
+      setTotalCount(count || 0);
+
+      // Get paginated data
       const { data, error } = await supabase
         .from("photos")
         .select(`
@@ -58,7 +70,7 @@ export default function LeaderboardPage() {
           users!inner(email)
         `)
         .order("score", { ascending: false })
-        .limit(50);
+        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
 
@@ -79,6 +91,8 @@ export default function LeaderboardPage() {
       setLoading(false);
     }
   };
+
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
   const getRankStyle = (index: number) => {
     if (index === 0) return "border-yellow-500/50 bg-yellow-500/10 shadow-[0_0_30px_-5px_rgba(234,179,8,0.2)]";
@@ -225,6 +239,55 @@ export default function LeaderboardPage() {
             <Trophy className="w-12 h-12 mx-auto mb-4 opacity-20" />
             <p className="mb-4">No champions yet.</p>
             <a href="/upload" className="text-primary hover:text-primary-glow font-bold hover:underline">Be the first to upload!</a>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {!loading && totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition font-medium"
+            >
+              Previous
+            </button>
+
+            <div className="flex items-center gap-2">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-10 h-10 rounded-lg transition font-medium ${currentPage === pageNum
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-white/5 hover:bg-white/10 text-white/60'
+                      }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition font-medium"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
