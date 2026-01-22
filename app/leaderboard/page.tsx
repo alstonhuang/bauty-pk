@@ -189,43 +189,43 @@ export default function LeaderboardPage() {
 
                   {/* Uploader Info */}
                   <div className="hidden md:flex flex-col min-w-0 flex-shrink">
-                    <div className="text-sm font-medium text-white/80 truncate">
+                    <div className="text-sm font-semibold text-white/80 truncate">
                       {photo.users?.email ? photo.users.email.split('@')[0] : 'Anonymous'}
                     </div>
-                    <div className="text-xs text-white/40">Uploader</div>
+                    <div className="text-xs text-white/40 uppercase tracking-wider font-semibold">Uploader</div>
                   </div>
 
                   {/* Mobile Stats (Hidden on Desktop) */}
                   <div className="flex-1 flex items-center justify-end md:hidden min-w-0">
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-yellow-400 text-shadow-glow font-mono">
+                      <div className="text-2xl font-bold text-yellow-400 text-shadow-glow font-mono tabular-nums">
                         {photo.score.toLocaleString()}
                       </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Points</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Points</div>
                     </div>
                   </div>
 
                   {/* Desktop Stats Grid */}
                   <div className="hidden md:flex flex-1 items-center justify-end gap-6 min-w-0 pr-2">
                     <div className="text-right min-w-[100px] flex-shrink-0">
-                      <div className="text-3xl font-bold text-yellow-400 text-shadow-glow font-mono">
+                      <div className="text-3xl font-bold text-yellow-400 text-shadow-glow font-mono tabular-nums">
                         {photo.score.toLocaleString()}
                       </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Points</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Points</div>
                     </div>
 
                     <div className="text-right min-w-[90px] flex-shrink-0">
-                      <div className={`text-2xl font-bold font-mono ${winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
+                      <div className={`text-2xl font-bold font-mono tabular-nums ${winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
                         {winRate}%
                       </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Win Rate</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Win Rate</div>
                     </div>
 
                     <div className="text-right min-w-[90px] flex-shrink-0">
-                      <div className="text-2xl font-bold text-white/60 font-mono">
+                      <div className="text-2xl font-bold text-white/60 font-mono tabular-nums">
                         {photo.matches}
                       </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Matches</div>
+                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Matches</div>
                     </div>
                   </div>
                 </motion.div>
@@ -271,8 +271,8 @@ export default function LeaderboardPage() {
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
                     className={`w-10 h-10 rounded-lg transition font-medium ${currentPage === pageNum
-                        ? 'bg-pink-500 text-white'
-                        : 'bg-white/5 hover:bg-white/10 text-white/60'
+                      ? 'bg-pink-500 text-white'
+                      : 'bg-white/5 hover:bg-white/10 text-white/60'
                       }`}
                   >
                     {pageNum}
