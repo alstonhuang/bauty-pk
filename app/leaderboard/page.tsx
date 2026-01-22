@@ -13,7 +13,7 @@ type Photo = {
   matches: number;
   users?: {
     email: string;
-  };
+  } | null;
 };
 
 const listVariants: Variants = {
@@ -48,12 +48,31 @@ export default function LeaderboardPage() {
       setLoading(true);
       const { data, error } = await supabase
         .from("photos")
-        .select("id, url, score, wins, matches, users(email)")
+        .select(`
+          id, 
+          url, 
+          score, 
+          wins, 
+          matches,
+          user_id,
+          users!inner(email)
+        `)
         .order("score", { ascending: false })
         .limit(50);
 
       if (error) throw error;
-      setPhotos(data || []);
+
+      // Transform data to match our Photo type
+      const transformedData = (data || []).map((item: any) => ({
+        id: item.id,
+        url: item.url,
+        score: item.score,
+        wins: item.wins,
+        matches: item.matches,
+        users: item.users ? { email: item.users.email } : null
+      }));
+
+      setPhotos(transformedData);
     } catch (err) {
       console.error("Error fetching leaderboard:", err);
     } finally {
