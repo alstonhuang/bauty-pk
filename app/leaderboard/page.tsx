@@ -192,7 +192,7 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* Desktop Stats Grid */}
-                  <div className="hidden md:flex flex-1 items-center justify-end gap-6 min-w-0">
+                  <div className="hidden md:flex flex-1 items-center justify-end gap-6 min-w-0 pr-2">
                     <div className="text-right min-w-[100px] flex-shrink-0">
                       <div className="text-3xl font-bold text-yellow-400 text-shadow-glow font-mono">
                         {photo.score.toLocaleString()}
@@ -200,14 +200,14 @@ export default function LeaderboardPage() {
                       <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Points</div>
                     </div>
 
-                    <div className="text-right min-w-[80px] flex-shrink-0">
+                    <div className="text-right min-w-[90px] flex-shrink-0">
                       <div className={`text-2xl font-bold font-mono ${winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
                         {winRate}%
                       </div>
                       <div className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Win Rate</div>
                     </div>
 
-                    <div className="text-right min-w-[80px] flex-shrink-0">
+                    <div className="text-right min-w-[90px] flex-shrink-0">
                       <div className="text-2xl font-bold text-white/60 font-mono">
                         {photo.matches}
                       </div>
