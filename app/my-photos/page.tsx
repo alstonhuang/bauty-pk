@@ -19,6 +19,7 @@ type Photo = {
 
 export default function MyPhotosPage() {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<{ username: string } | null>(null);
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
@@ -32,9 +33,17 @@ export default function MyPhotosPage() {
     setUser(user);
     if (user) {
       fetchMyPhotos(user.id);
+      fetchProfile(user.id);
     } else {
       setLoading(false);
     }
+  };
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase.from("user_profiles").select("username").eq("id", userId).maybeSingle();
+      if (data) setProfile(data);
+    } catch (e) { }
   };
 
   const fetchMyPhotos = async (userId: string) => {
@@ -106,7 +115,13 @@ export default function MyPhotosPage() {
           <h1 className="text-5xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 pb-2">
             My Photos
           </h1>
-          <p className="text-white/60 text-lg">Manage your uploaded photos and track their performance.</p>
+          <p className="text-white/60 text-lg mb-4">Manage your uploaded photos and track their performance.</p>
+          {profile && (
+            <Link href={`/user/${profile.username}`} className="text-pink-400 hover:text-pink-300 font-bold transition flex items-center justify-center gap-2 mb-8">
+              <span>View Public Profile</span>
+              <span>→</span>
+            </Link>
+          )}
         </motion.div>
 
         {loading ? (

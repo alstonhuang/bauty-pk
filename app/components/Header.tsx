@@ -13,6 +13,16 @@ export default function Header() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [energy, setEnergy] = useState<number | null>(null);
+  const [profile, setProfile] = useState<{ username: string; display_name: string; avatar_url: string | null } | null>(null);
+
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data } = await supabase.from("user_profiles").select("username, display_name, avatar_url").eq("id", userId).maybeSingle();
+      if (data) setProfile(data);
+    } catch (e) {
+      // Profile might not exist yet
+    }
+  };
 
   const fetchEnergy = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -26,16 +36,22 @@ export default function Header() {
   };
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initData = (session: any) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchEnergy();
-    });
+      if (session?.user) {
+        fetchEnergy();
+        fetchProfile(session.user.id);
+      } else {
+        setProfile(null);
+      }
+    };
+
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => initData(session));
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchEnergy();
+      initData(session);
     });
 
     // Set up interval to refresh energy periodically (every 30s)
@@ -53,6 +69,7 @@ export default function Header() {
     await supabase.auth.signOut();
     setUser(null);
     setEnergy(null);
+    setProfile(null);
     router.refresh();
   };
 
@@ -152,11 +169,18 @@ export default function Header() {
                     </div>
                   </div>
 
-                  <div className="hidden md:flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10">
-                      {user.email?.charAt(0).toUpperCase()}
+                  <Link
+                    href={profile ? `/user/${profile.username}` : '/profile/edit'}
+                    className="hidden md:flex items-center gap-2 group relative"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10 overflow-hidden group-hover:ring-pink-500 transition-all">
+                      {profile?.avatar_url ? (
+                        <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                      ) : (
+                        (profile?.display_name?.[0] || user.email?.charAt(0) || "?").toUpperCase()
+                      )}
                     </div>
-                  </div>
+                  </Link>
                   <button
                     onClick={handleLogout}
                     className="text-white/40 hover:text-red-400 transition-colors"
