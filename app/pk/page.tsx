@@ -259,32 +259,39 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
                     transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
                     className="relative z-10 filter drop-shadow-[0_0_30px_rgba(234,179,8,0.4)]"
                   >
+                    <div className="absolute inset-0 bg-yellow-500/30 blur-[60px] rounded-full scale-75 animate-pulse" />
                     <img
                       src="/victory-trophy.png"
                       alt="Victory Trophy"
-                      className="w-32 h-32 md:w-56 md:h-56 object-contain"
+                      className="w-32 h-32 md:w-56 md:h-56 object-contain relative z-10 drop-shadow-[0_0_50px_rgba(234,179,8,0.6)]"
                     />
                   </motion.div>
 
-                  {/* Floating Particles Around Trophy */}
-                  {[...Array(8)].map((_, i) => (
+                  {/* Floating Particles Around Trophy - Centered Origin */}
+                  {[...Array(12)].map((_, i) => (
                     <motion.div
                       key={i}
+                      style={{
+                        top: "50%",
+                        left: "50%",
+                      }}
                       animate={{
-                        y: [0, -120],
-                        x: [0, (Math.random() - 0.5) * 120],
-                        opacity: [0, 1, 0, 0],
-                        scale: [0, Math.random() * 1.5 + 0.5, 0]
+                        y: [0, -150 - Math.random() * 50],
+                        x: [0, (Math.random() - 0.5) * 200],
+                        opacity: [0, 1, 0],
+                        scale: [0, Math.random() * 1.5 + 0.5, 0],
+                        rotate: [0, Math.random() * 360]
                       }}
                       transition={{
-                        duration: 2 + Math.random(),
+                        duration: 1.5 + Math.random() * 1.5,
                         repeat: Infinity,
-                        delay: i * 0.2,
+                        delay: i * 0.1,
                         ease: "easeOut"
                       }}
-                      className="absolute top-1/2 left-1/2 w-2 h-2 bg-yellow-300 rounded-full blur-[1px] shadow-[0_0_10px_rgba(253,224,71,0.8)]"
+                      className="absolute w-2 h-2 bg-yellow-300 rounded-full blur-[1px] shadow-[0_0_15px_rgba(253,224,71,1)] z-0"
                     />
                   ))}
+
                 </div>
 
                 <motion.div

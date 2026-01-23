@@ -113,18 +113,21 @@ export default function LeaderboardPage() {
       <div className="relative group">
         <div className="absolute inset-0 bg-yellow-400 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
         <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-400 fill-yellow-400/20 relative z-10 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
+        <div className="absolute -top-2 -right-2 w-5 h-5 md:w-6 md:h-6 bg-yellow-400 text-black font-black flex items-center justify-center rounded-full text-xs md:text-sm shadow-lg z-20 border-2 border-black/50">1</div>
       </div>
     );
     if (index === 1) return (
       <div className="relative group">
         <div className="absolute inset-0 bg-gray-300 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
         <Medal className="w-8 h-8 md:w-10 md:h-10 text-gray-300 fill-gray-300/20 relative z-10 drop-shadow-[0_0_10px_rgba(209,213,219,0.5)]" />
+        <div className="absolute -top-2 -right-2 w-5 h-5 md:w-6 md:h-6 bg-gray-300 text-black font-black flex items-center justify-center rounded-full text-xs md:text-sm shadow-lg z-20 border-2 border-black/50">2</div>
       </div>
     );
     if (index === 2) return (
       <div className="relative group">
         <div className="absolute inset-0 bg-orange-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
         <Medal className="w-8 h-8 md:w-10 md:h-10 text-orange-400 fill-orange-400/20 relative z-10 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
+        <div className="absolute -top-2 -right-2 w-5 h-5 md:w-6 md:h-6 bg-orange-400 text-black font-black flex items-center justify-center rounded-full text-xs md:text-sm shadow-lg z-20 border-2 border-black/50">3</div>
       </div>
     );
     return <span className="font-mono text-xl md:text-2xl text-white/20">{(index + 1).toString().padStart(2, '0')}</span>;
