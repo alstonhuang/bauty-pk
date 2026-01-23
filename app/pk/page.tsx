@@ -248,32 +248,41 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
                 transition={{ type: "spring", damping: 12 }}
                 className="relative flex flex-col items-center"
               >
-                {/* Crown Icon with Glow */}
+                {/* 3D Trophy Image with Glow */}
                 <div className="relative mb-4">
                   <motion.div
-                    animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 3 }}
+                    animate={{
+                      scale: [1, 1.1, 1],
+                      rotate: [0, 5, -5, 0],
+                      y: [0, -15, 0]
+                    }}
+                    transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                    className="relative z-10 filter drop-shadow-[0_0_30px_rgba(234,179,8,0.4)]"
                   >
-                    <Trophy className="w-24 h-24 md:w-32 md:h-32 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)]" />
+                    <img
+                      src="/victory-trophy.png"
+                      alt="Victory Trophy"
+                      className="w-32 h-32 md:w-56 md:h-56 object-contain"
+                    />
                   </motion.div>
 
                   {/* Floating Particles Around Trophy */}
-                  {[...Array(6)].map((_, i) => (
+                  {[...Array(8)].map((_, i) => (
                     <motion.div
                       key={i}
                       animate={{
-                        y: [-20, -100],
-                        x: [0, (i % 2 === 0 ? 50 : -50)],
-                        opacity: [0, 1, 0],
-                        scale: [0, 1, 0]
+                        y: [0, -120],
+                        x: [0, (Math.random() - 0.5) * 120],
+                        opacity: [0, 1, 0, 0],
+                        scale: [0, Math.random() * 1.5 + 0.5, 0]
                       }}
                       transition={{
-                        duration: 2,
+                        duration: 2 + Math.random(),
                         repeat: Infinity,
-                        delay: i * 0.3,
+                        delay: i * 0.2,
                         ease: "easeOut"
                       }}
-                      className="absolute top-1/2 left-1/2 w-2 h-2 bg-yellow-400 rounded-full"
+                      className="absolute top-1/2 left-1/2 w-2 h-2 bg-yellow-300 rounded-full blur-[1px] shadow-[0_0_10px_rgba(253,224,71,0.8)]"
                     />
                   ))}
                 </div>
