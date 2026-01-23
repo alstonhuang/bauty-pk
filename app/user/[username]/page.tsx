@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
-import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp } from "lucide-react";
+import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 
@@ -140,6 +140,14 @@ export default function UserProfilePage() {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+        {/* Back Button */}
+        <Link
+          href="/"
+          className="absolute top-6 left-6 z-20 p-3 bg-black/40 backdrop-blur-md rounded-full text-white/70 hover:text-white hover:bg-black/60 transition-all"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
       </div>
 
       {/* Profile Content */}

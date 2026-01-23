@@ -160,8 +160,8 @@ export default function EditProfilePage() {
       return;
     }
 
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      setError("Username can only contain letters, numbers, and underscores");
+    if (!/^[a-zA-Z0-9_.]+$/.test(username)) {
+      setError("Username can only contain letters, numbers, underscores, and dots");
       return;
     }
 
@@ -323,7 +323,7 @@ export default function EditProfilePage() {
               <input
                 type="text"
                 value={username}
-                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, ""))}
                 className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-lg focus:border-pink-500 focus:outline-none transition"
                 placeholder="username"
                 maxLength={30}
@@ -331,7 +331,7 @@ export default function EditProfilePage() {
               />
             </div>
             <p className="text-xs text-white/40 mt-2">
-              Letters, numbers, and underscores only. Min 3 characters.
+              Letters, numbers, underscores, and dots allowed. Min 3 characters.
             </p>
           </div>
 
