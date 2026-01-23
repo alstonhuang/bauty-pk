@@ -230,14 +230,65 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
         <AnimatePresence>
           {isWinner && (
             <motion.div
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="absolute inset-0 z-20 flex flex-col items-center justify-center drop-shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 z-20 flex flex-col items-center justify-center pointer-events-none"
             >
-              <Trophy className="w-32 h-32 text-yellow-400 fill-yellow-400 mb-4 animate-bounce" />
-              <div className="bg-black/80 px-4 py-2 rounded-full border border-yellow-400">
-                <span className="text-yellow-400 font-bold text-2xl">+{result.gained} PTS</span>
-              </div>
+              {/* Explosion Effect Background */}
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 2, opacity: [0, 0.2, 0] }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                className="absolute w-64 h-64 bg-yellow-400 rounded-full blur-3xl"
+              />
+
+              <motion.div
+                initial={{ scale: 0.5, y: 20, opacity: 0 }}
+                animate={{ scale: 1, y: 0, opacity: 1 }}
+                transition={{ type: "spring", damping: 12 }}
+                className="relative flex flex-col items-center"
+              >
+                {/* Crown Icon with Glow */}
+                <div className="relative mb-4">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1], rotate: [0, 5, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 3 }}
+                  >
+                    <Trophy className="w-24 h-24 md:w-32 md:h-32 text-yellow-400 fill-yellow-400 drop-shadow-[0_0_20px_rgba(234,179,8,0.8)]" />
+                  </motion.div>
+
+                  {/* Floating Particles Around Trophy */}
+                  {[...Array(6)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      animate={{
+                        y: [-20, -100],
+                        x: [0, (i % 2 === 0 ? 50 : -50)],
+                        opacity: [0, 1, 0],
+                        scale: [0, 1, 0]
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        delay: i * 0.3,
+                        ease: "easeOut"
+                      }}
+                      className="absolute top-1/2 left-1/2 w-2 h-2 bg-yellow-400 rounded-full"
+                    />
+                  ))}
+                </div>
+
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
+                  className="bg-black/60 backdrop-blur-md px-6 py-2 rounded-2xl border-2 border-yellow-400/50 shadow-[0_0_30px_rgba(234,179,8,0.3)]"
+                >
+                  <span className="text-yellow-400 font-black text-3xl md:text-4xl italic tracking-tighter">
+                    WINNER <span className="text-white ml-2">+{result.gained}</span>
+                  </span>
+                </motion.div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

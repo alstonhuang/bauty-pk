@@ -110,24 +110,24 @@ export default function LeaderboardPage() {
 
   const RenderRankIcon = ({ index }: { index: number }) => {
     if (index === 0) return (
-      <div className="relative">
-        <Crown className="w-8 h-8 text-yellow-400 fill-yellow-400/20" />
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-yellow-400 text-black rounded-full flex items-center justify-center text-xs font-black">1</div>
+      <div className="relative group">
+        <div className="absolute inset-0 bg-yellow-400 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
+        <Crown className="w-8 h-8 md:w-10 md:h-10 text-yellow-400 fill-yellow-400/20 relative z-10 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]" />
       </div>
     );
     if (index === 1) return (
-      <div className="relative">
-        <Medal className="w-8 h-8 text-gray-300 fill-gray-300/20" />
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-gray-300 text-black rounded-full flex items-center justify-center text-xs font-black">2</div>
+      <div className="relative group">
+        <div className="absolute inset-0 bg-gray-300 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
+        <Medal className="w-8 h-8 md:w-10 md:h-10 text-gray-300 fill-gray-300/20 relative z-10 drop-shadow-[0_0_10px_rgba(209,213,219,0.5)]" />
       </div>
     );
     if (index === 2) return (
-      <div className="relative">
-        <Medal className="w-8 h-8 text-orange-400 fill-orange-400/20" />
-        <div className="absolute -top-1 -right-1 w-5 h-5 bg-orange-400 text-black rounded-full flex items-center justify-center text-xs font-black">3</div>
+      <div className="relative group">
+        <div className="absolute inset-0 bg-orange-500 blur-lg opacity-20 group-hover:opacity-40 transition-opacity" />
+        <Medal className="w-8 h-8 md:w-10 md:h-10 text-orange-400 fill-orange-400/20 relative z-10 drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]" />
       </div>
     );
-    return <span className="font-mono text-xl text-white/40">#{index + 1}</span>;
+    return <span className="font-mono text-xl md:text-2xl text-white/20">{(index + 1).toString().padStart(2, '0')}</span>;
   };
 
   return (
@@ -173,76 +173,64 @@ export default function LeaderboardPage() {
                 <motion.div
                   key={photo.id}
                   variants={itemVariants}
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-                  className={`glass-panel p-4 flex items-center gap-4 md:gap-6 transition-colors cursor-pointer ${getRankStyle(index)}`}
+                  whileHover={{ scale: 1.01, backgroundColor: "rgba(255,255,255,0.06)" }}
+                  className={`glass-panel p-3 md:p-5 flex items-center transition-all cursor-pointer border-l-4 ${getRankStyle(index)} ${index === 0 ? 'border-l-yellow-500' : index === 1 ? 'border-l-gray-400' : index === 2 ? 'border-l-orange-500' : 'border-l-transparent'}`}
                   onClick={() => setSelectedPhoto(photo)}
                 >
-                  {/* Rank */}
-                  <div className="w-12 md:w-16 flex-shrink-0 flex justify-center items-center">
-                    <RenderRankIcon index={index} />
+                  {/* Rank & Avatar container */}
+                  <div className="flex items-center gap-4 md:gap-8 flex-shrink-0">
+                    <div className="w-10 md:w-14 flex justify-center items-center">
+                      <RenderRankIcon index={index} />
+                    </div>
+
+                    <div className={`relative w-14 h-14 md:w-16 md:h-16 flex-shrink-0 rounded-full overflow-hidden p-0.5 bg-gradient-to-br transition-shadow ${index === 0 ? 'from-yellow-400/50 to-orange-500/50 shadow-[0_0_15px_rgba(234,179,8,0.3)]' :
+                      index === 1 ? 'from-gray-300/50 to-gray-500/50 shadow-[0_0_15px_rgba(156,163,175,0.3)]' :
+                        index === 2 ? 'from-orange-400/50 to-red-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]' : 'from-white/10 to-white/5'
+                      }`}>
+                      <div className="w-full h-full rounded-full overflow-hidden ring-1 ring-white/10">
+                        <img
+                          src={photo.url}
+                          alt={`Rank ${index + 1}`}
+                          className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-110"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Photo (Circular Avatar) */}
-                  <div className={`relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center rounded-full overflow-hidden ring-2 ${index === 0 ? 'ring-yellow-400 shadow-lg shadow-yellow-400/20' :
-                    index === 1 ? 'ring-gray-300' :
-                      index === 2 ? 'ring-orange-400' : 'ring-white/10'
-                    }`}>
-                    <img
-                      src={photo.url}
-                      alt={`Rank ${index + 1}`}
-                      className="w-full h-full object-cover transform transition-transform duration-500 hover:scale-110"
-                    />
-                  </div>
-
-                  {/* Uploader Info */}
-                  <div className="hidden md:flex flex-col min-w-0 flex-shrink">
+                  {/* Name & Title */}
+                  <div className="ml-4 md:ml-8 flex-1 min-w-0 pr-4">
                     {photo.users?.username ? (
                       <Link
                         href={`/user/${photo.users.username}`}
-                        className="text-sm font-semibold text-white/80 hover:text-pink-400 truncate transition"
+                        className="block text-base md:text-lg font-bold text-white/90 hover:text-pink-400 truncate transition group"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {photo.users.display_name}
                       </Link>
                     ) : (
-                      <div className="text-sm font-semibold text-white/80 truncate">
+                      <div className="text-base md:text-lg font-bold text-white/60 truncate italic">
                         Anonymous
                       </div>
                     )}
-                    <div className="text-xs text-white/40 uppercase tracking-wider font-semibold">Uploader</div>
+                    <div className="text-[10px] md:text-xs text-white/30 uppercase tracking-[0.2em] font-black">Competitor</div>
                   </div>
 
-                  {/* Mobile Stats (Hidden on Desktop) */}
-                  <div className="flex-1 flex items-center justify-end md:hidden min-w-0">
+                  {/* Stats Grid */}
+                  <div className="flex items-center gap-4 md:gap-10 shrink-0">
+                    {/* Score */}
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-yellow-400 text-shadow-glow font-mono tabular-nums">
+                      <div className={`text-2xl md:text-3xl font-black font-mono tabular-nums tracking-tighter ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-white/80'}`}>
                         {photo.score.toLocaleString()}
                       </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Points</div>
-                    </div>
-                  </div>
-
-                  {/* Desktop Stats Grid */}
-                  <div className="hidden md:flex flex-1 items-center justify-end gap-6 min-w-0 pr-2">
-                    <div className="text-right min-w-[100px] flex-shrink-0">
-                      <div className="text-3xl font-bold text-yellow-400 text-shadow-glow font-mono tabular-nums">
-                        {photo.score.toLocaleString()}
-                      </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Points</div>
+                      <div className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-[0.15em] font-bold">Elo Rating</div>
                     </div>
 
-                    <div className="text-right min-w-[90px] flex-shrink-0">
-                      <div className={`text-2xl font-bold font-mono tabular-nums ${winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
+                    {/* Win Rate (Desktop only for space) */}
+                    <div className="hidden sm:block text-right border-l border-white/5 pl-4 md:pl-8">
+                      <div className={`text-lg md:text-xl font-bold font-mono tabular-nums ${winRate >= 50 ? 'text-green-400' : 'text-white/50'}`}>
                         {winRate}%
                       </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Win Rate</div>
-                    </div>
-
-                    <div className="text-right min-w-[90px] flex-shrink-0">
-                      <div className="text-2xl font-bold text-white/60 font-mono tabular-nums">
-                        {photo.matches}
-                      </div>
-                      <div className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">Matches</div>
+                      <div className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-[0.1em] font-semibold">Win Rate</div>
                     </div>
                   </div>
                 </motion.div>
