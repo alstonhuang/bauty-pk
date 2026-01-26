@@ -263,7 +263,8 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
                     <img
                       src="/victory-trophy.png"
                       alt="Victory Trophy"
-                      className="w-40 h-40 md:w-64 md:h-64 object-contain relative z-10 mix-blend-screen"
+                      className="w-40 h-40 md:w-64 md:h-64 object-contain relative z-10 mix-blend-screen brightness-110 contrast-125"
+                      style={{ filter: 'brightness(1.2) contrast(1.3)' }}
                     />
                   </motion.div>
 
