@@ -66,6 +66,17 @@ reporter.update_status("YourProjectName", "🚧 Working")
 
 ---
 
+## 🕵️‍♂️ For /audit Command (Namespaced: /cc-audit)
+**Manager Only**. executing this command will:
+1.  Read `DASHBOARD.md` to find all projects.
+2.  Check for `Actual Code Path` in each project's STATUS.
+3.  **Local Projects**: Scan file system for recent changes and auto-log "Active" or "Idle".
+4.  **Remote Projects**: Post a "🔔 PENDING REQUEST" signal to their STATUS.md.
+
+**Usage**: `python path/to/skill/audit_manager.py`
+
+---
+
 ## 🔄 For /report Command (Namespaced: /cc-rep)
 When user says `/report` or the namespaced `/cc-rep`:
 1. Auto-summarize your work in this session
