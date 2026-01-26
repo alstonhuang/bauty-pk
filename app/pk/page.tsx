@@ -263,7 +263,7 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
                     <img
                       src="/victory-trophy.png"
                       alt="Victory Trophy"
-                      className="w-40 h-40 md:w-64 md:h-64 object-contain relative z-10"
+                      className="w-40 h-40 md:w-64 md:h-64 object-contain relative z-10 mix-blend-screen"
                     />
                   </motion.div>
 
