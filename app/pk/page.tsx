@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
 import { supabase } from '@/lib/supabaseClient';
-import GoldTrophy from '@/app/components/GoldTrophy';
 
 type Photo = {
   id: string;
@@ -261,7 +260,11 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
                     className="relative z-10 filter drop-shadow-[0_0_30px_rgba(234,179,8,0.4)]"
                   >
                     <div className="absolute inset-0 bg-yellow-500/30 blur-[60px] rounded-full scale-75 animate-pulse" />
-                    <GoldTrophy className="w-32 h-32 md:w-56 md:h-56 relative z-10" />
+                    <img
+                      src="/victory-trophy.png"
+                      alt="Victory Trophy"
+                      className="w-40 h-40 md:w-64 md:h-64 object-contain relative z-10"
+                    />
                   </motion.div>
 
                   {/* Floating Particles Around Trophy - Centered Origin */}
