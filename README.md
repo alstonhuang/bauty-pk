@@ -5,6 +5,7 @@ A premium photo voting platform where users can upload photos and compete in hea
 ## ✨ Features
 
 - 🔐 **Google OAuth Authentication** - Secure login with Google
+- 🔐 **LINE Login** - Authenticate with LINE (custom OAuth implementation)
 - 📸 **Photo Upload** - Upload and manage your photos
 - ⚔️ **PK Battles** - Vote in head-to-head photo competitions
 - ⚡ **Energy System** - Energy-based voting with auto-regeneration
@@ -38,9 +39,17 @@ A premium photo voting platform where users can upload photos and compete in hea
    
    Create `.env.local` in the root directory:
    ```env
+   # Supabase
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+   
+   # LINE Login (optional, for LINE authentication)
+   NEXT_PUBLIC_LINE_CHANNEL_ID=your_line_channel_id
+   LINE_CHANNEL_SECRET=your_line_channel_secret
    ```
+   
+   See `.env.example` for a complete template.
 
 4. **Set up Supabase**
    
@@ -54,7 +63,16 @@ A premium photo voting platform where users can upload photos and compete in hea
    - Set up OAuth 2.0 in Google Cloud Console
    - Add redirect URI: `https://<your-project>.supabase.co/auth/v1/callback`
 
-6. **Run development server**
+6. **Configure LINE Login (Optional)**
+   
+   For detailed LINE login setup instructions, see [LINE_LOGIN_SETUP.md](./LINE_LOGIN_SETUP.md)
+   
+   Quick steps:
+   - Create a LINE Login channel at [LINE Developers](https://developers.line.biz/)
+   - Add callback URL: `http://localhost:3000/api/auth/line/callback` (local) or `https://<your-domain>/api/auth/line/callback` (production)
+   - Copy Channel ID and Secret to `.env.local`
+
+7. **Run development server**
    ```bash
    npm run dev
    ```
