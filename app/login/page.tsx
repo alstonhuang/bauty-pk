@@ -12,13 +12,27 @@ export default function LoginPage() {
   const handleLogin = async (provider: 'google' | 'line') => {
     try {
       setLoading(provider)
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: provider as any,
-        options: {
-          redirectTo: `${window.location.origin}/`,
-        },
-      })
-      if (error) throw error
+
+      if (provider === 'google') {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/`,
+          },
+        })
+        if (error) throw error
+      } else {
+        // Option B: Manual LINE Login Flow
+        const clientId = process.env.NEXT_PUBLIC_LINE_CHANNEL_ID;
+        if (!clientId) {
+          throw new Error('LINE Client ID is not configured (NEXT_PUBLIC_LINE_CHANNEL_ID)');
+        }
+        const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/line/callback`);
+        const state = Math.random().toString(36).substring(7); // Simple state for CSRF
+        const lineAuthUrl = `https://access.line.me/oauth2/v2.1/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}&state=${state}&scope=profile%20openid%20email`;
+
+        window.location.href = lineAuthUrl;
+      }
     } catch (error: any) {
       setMessage({ type: 'error', text: error.message })
       setLoading(null)
