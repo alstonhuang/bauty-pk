@@ -13,7 +13,7 @@ export default function LoginPage() {
     try {
       setLoading(provider)
       const { error } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: provider as any,
         options: {
           redirectTo: `${window.location.origin}/`,
         },
@@ -93,8 +93,8 @@ export default function LoginPage() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className={`mt-8 p-4 rounded-xl text-sm font-medium w-full text-center ${message.type === 'success'
-                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                : 'bg-red-500/10 text-red-400 border border-red-500/20'
+              ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+              : 'bg-red-500/10 text-red-400 border border-red-500/20'
               }`}
           >
             {message.text}
