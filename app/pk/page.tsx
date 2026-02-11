@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
 
 type Photo = {
@@ -233,12 +234,15 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
           className="relative z-10 w-full h-full flex items-center justify-center group"
           onClick={() => !disabled && onVote(photo.id, opponentId)}
         >
-          <img
+          <Image
             src={photo.url}
             alt="Contestant"
-            style={{ maxHeight: '50vh', maxWidth: '100%', objectFit: 'contain' }}
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+            style={{ objectFit: 'contain' }}
             className={`
-                 rounded-lg shadow-2xl
+                 rounded-lg shadow-2xl p-4
                  transition-all duration-300
                  ${!disabled && 'cursor-pointer hover:scale-105 hover:border-4 hover:border-yellow-400 hover:shadow-[0_0_30px_rgba(255,215,0,0.6)]'}
                `}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Photo {
   id: string
@@ -99,12 +100,15 @@ export default function GalleryPage() {
               className="glass-panel p-3 break-inside-avoid relative group overflow-hidden animate-in fade-in fill-mode-backwards"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <img
-                src={photo.url}
-                alt="Gallery Item"
-                loading="lazy"
-                className="w-full h-auto rounded-lg transform transition-transform duration-700 group-hover:scale-105"
-              />
+              <div className="relative aspect-square w-full overflow-hidden rounded-lg">
+                <Image
+                  src={photo.url}
+                  alt="Gallery Item"
+                  fill
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  className="object-cover transform transition-transform duration-700 group-hover:scale-105"
+                />
+              </div>
 
               {/* Overlay Info */}
               <div className="absolute inset-x-3 bottom-3 rounded-b-lg p-4 bg-gradient-to-t from-black/90 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, Variants, AnimatePresence } from "framer-motion";
 import { Trophy, Medal, Crown } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 type Photo = {
@@ -190,11 +191,13 @@ export default function LeaderboardPage() {
                       index === 1 ? 'from-gray-300/50 to-gray-500/50 shadow-[0_0_15px_rgba(156,163,175,0.3)]' :
                         index === 2 ? 'from-orange-400/50 to-red-500/50 shadow-[0_0_15px_rgba(249,115,22,0.3)]' : 'from-white/10 to-white/5'
                       }`}>
-                      <div className="w-full h-full rounded-full overflow-hidden ring-1 ring-white/10">
-                        <img
+                      <div className="w-full h-full rounded-full overflow-hidden ring-1 ring-white/10 relative">
+                        <Image
                           src={photo.url}
                           alt={`Rank ${index + 1}`}
-                          className="w-full h-full object-cover transform transition-transform duration-700 hover:scale-110"
+                          fill
+                          sizes="(max-width: 768px) 56px, 64px"
+                          className="object-cover transform transition-transform duration-700 hover:scale-110"
                         />
                       </div>
                     </div>
@@ -317,10 +320,11 @@ export default function LeaderboardPage() {
               className="relative max-w-5xl max-h-[90vh] w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <Image
                 src={selectedPhoto.url}
                 alt="Full size"
-                className="w-full h-full object-contain rounded-lg shadow-2xl"
+                fill
+                className="object-contain rounded-lg shadow-2xl"
               />
               <button
                 onClick={() => setSelectedPhoto(null)}

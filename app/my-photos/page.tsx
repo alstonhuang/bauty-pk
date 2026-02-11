@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "@supabase/supabase-js";
 import { Upload, Trash2, Eye, Trophy, TrendingUp, Target } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 type Photo = {
@@ -161,10 +162,12 @@ export default function MyPhotosPage() {
                     className="relative aspect-square cursor-pointer overflow-hidden bg-black/20"
                     onClick={() => setSelectedPhoto(photo)}
                   >
-                    <img
+                    <Image
                       src={photo.url}
                       alt="My photo"
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      className="object-cover group-hover:scale-110 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <Eye className="w-12 h-12 text-white drop-shadow-lg" />
@@ -245,10 +248,11 @@ export default function MyPhotosPage() {
               className="relative max-w-5xl max-h-[90vh] w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <img
+              <Image
                 src={selectedPhoto.url}
                 alt="Full size"
-                className="w-full h-full object-contain rounded-lg shadow-2xl"
+                fill
+                className="object-contain rounded-lg shadow-2xl"
               />
               <button
                 onClick={() => setSelectedPhoto(null)}

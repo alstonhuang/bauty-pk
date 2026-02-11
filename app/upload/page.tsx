@@ -36,6 +36,47 @@ export default function UploadPage() {
     }
   }
 
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob(
+            (blob) => resolve(blob || file),
+            'image/webp',
+            0.8
+          );
+        };
+      };
+    });
+  };
+
   const handleUpload = async () => {
     if (!file) return
     if (!user) {
@@ -47,15 +88,21 @@ export default function UploadPage() {
     setMessage('')
 
     try {
+      // 0. Compress Image
+      setMessage('Compressing image...')
+      const compressedBlob = await compressImage(file)
+      const uploadFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+        type: 'image/webp'
+      })
+
       // 1. Upload to Supabase Storage
-      // Use a unique path: user_id/timestamp_filename
-      const fileExt = file.name.split('.').pop()
+      const fileExt = 'webp'
       const fileName = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExt}`
       const filePath = `${user.id}/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from('photos')
-        .upload(filePath, file)
+        .upload(filePath, uploadFile)
 
       if (uploadError) throw uploadError
 
