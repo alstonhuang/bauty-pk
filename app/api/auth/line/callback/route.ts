@@ -15,6 +15,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Use the actual origin from headers if proxied (like localtunnel)
+    const protocol = request.headers.get('x-forwarded-proto') || 'http'
+    const host = request.headers.get('x-forwarded-host') || request.nextUrl.host
+    const origin = `${protocol}://${host}`
+    const redirectUri = `${origin}/api/auth/line/callback`
+
     // 1. Exchange code for access token
     const tokenResponse = await fetch('https://api.line.me/oauth2/v2.1/token', {
       method: 'POST',
@@ -22,7 +28,7 @@ export async function GET(request: NextRequest) {
       body: new URLSearchParams({
         grant_type: 'authorization_code',
         code,
-        redirect_uri: `${request.nextUrl.origin}/api/auth/line/callback`,
+        redirect_uri: redirectUri,
         client_id: process.env.NEXT_PUBLIC_LINE_CHANNEL_ID || '',
         client_secret: process.env.LINE_CHANNEL_SECRET || '',
       }),

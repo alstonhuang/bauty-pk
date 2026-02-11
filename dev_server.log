@@ -1,0 +1,42 @@
+
+> synthetic-kilonova@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://10.0.0.13:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 904ms
+○ Compiling / ...
+ GET / 200 in 6.2s (compile: 5.8s, render: 341ms)
+ GET / 200 in 92ms (compile: 7ms, render: 85ms)
+ GET /workflows 404 in 1115ms (compile: 983ms, render: 132ms)
+ GET /login 200 in 746ms (compile: 670ms, render: 75ms)
+⚠ Cross origin request detected from cuddly-lies-joke.loca.lt to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+LINE Login Error: Error: redirect_uri does not match
+    at GET (app/api/auth/line/callback/route.ts:32:34)
+  30 |
+  31 |     const tokenData = await tokenResponse.json()
+> 32 |     if (!tokenResponse.ok) throw new Error(tokenData.error_description || 'Token exchange failed')
+     |                                  ^
+  33 |
+  34 |     // 2. Get user profile
+  35 |     const profileResponse = await fetch('https://api.line.me/v2/profile', {
+ GET /api/auth/line/callback?code=envr5keE1zR1QO2BG1c8&state=rgr0y3 307 in 1124ms (compile: 805ms, render: 319ms)
+ GET / 200 in 77ms (compile: 9ms, render: 69ms)
+⚠ Cross origin request detected from long-points-cheer.loca.lt to /_next/* resource. In a future major version of Next.js, you will need to explicitly configure "allowedDevOrigins" in next.config to allow this.
+Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allowedDevOrigins
+ GET /login 200 in 27ms (compile: 5ms, render: 22ms)
+ GET /login 200 in 25ms (compile: 7ms, render: 19ms)
+ GET /login 200 in 24ms (compile: 6ms, render: 18ms)
+ GET /login 200 in 34ms (compile: 7ms, render: 26ms)
+ GET /upload 200 in 900ms (compile: 852ms, render: 47ms)
+ GET /login 200 in 25ms (compile: 4ms, render: 21ms)
+ GET / 200 in 59ms (compile: 4ms, render: 55ms)
+ GET /login 200 in 21ms (compile: 4ms, render: 17ms)
+ GET /login 200 in 19ms (compile: 3ms, render: 16ms)
+ GET /login 200 in 25ms (compile: 6ms, render: 19ms)
+ GET /api/auth/line/callback?code=6Yy4zQzNcJrsr3MQYNmT&state=xmglw8 307 in 2.1s (compile: 45ms, render: 2.1s)
