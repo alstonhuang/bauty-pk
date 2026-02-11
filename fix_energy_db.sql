@@ -1,4 +1,4 @@
--- 1. Update the handle_new_user trigger function to populate both users and user_profiles
+-- 1. Update the handle_new_user trigger function
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -6,14 +6,13 @@ DECLARE
   final_username TEXT;
   counter INT := 0;
 BEGIN
-  -- Determine base username from email or metadata
+  -- Determine base username
   base_username := COALESCE(
     NEW.raw_user_meta_data->>'full_name',
     split_part(NEW.email, '@', 1),
     'user'
   );
   
-  -- Clean username (remove special chars for basic safety)
   base_username := regexp_replace(base_username, '[^a-zA-Z0-9]', '', 'g');
   final_username := base_username;
 
@@ -23,18 +22,14 @@ BEGIN
     final_username := base_username || counter::TEXT;
   END LOOP;
 
-  -- Insert into public.users (Energy & System Core)
+  -- Insert into public.users
   INSERT INTO public.users (id, email, username)
   VALUES (NEW.id, NEW.email, final_username)
   ON CONFLICT (id) DO NOTHING;
 
-  -- Insert into public.user_profiles (Social Data)
-  INSERT INTO public.user_profiles (
-    id,
-    username,
-    display_name,
-    avatar_url
-  ) VALUES (
+  -- Insert into public.user_profiles
+  INSERT INTO public.user_profiles (id, username, display_name, avatar_url)
+  VALUES (
     NEW.id,
     final_username,
     COALESCE(NEW.raw_user_meta_data->>'full_name', final_username),
@@ -46,7 +41,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 2. Create the add_energy function with overflow support
+-- 2. Improved Add Energy (Supports Overflow)
 CREATE OR REPLACE FUNCTION public.add_energy(amount integer)
 RETURNS json AS $$
 DECLARE
@@ -57,11 +52,72 @@ BEGIN
         RAISE EXCEPTION 'Not authenticated';
     END IF;
 
+    -- Simply add the amount, allowing it to go above max_energy
     UPDATE public.users
     SET energy = energy + amount
     WHERE id = v_user_id
     RETURNING energy INTO v_new_energy;
 
     RETURN json_build_object('success', true, 'energy', v_new_energy);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 3. Improved Consume Energy (Respects Overflow during regeneration)
+CREATE OR REPLACE FUNCTION public.consume_energy(cost integer DEFAULT 1)
+RETURNS json AS $$
+DECLARE
+    v_user_id uuid := auth.uid();
+    v_last_update timestamp with time zone;
+    v_current_energy integer;
+    v_max_energy integer;
+    
+    v_minutes_passed integer;
+    v_points_to_add integer;
+    v_regen_rate integer := 1; -- 1 point per minute
+    v_final_energy integer;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RAISE EXCEPTION 'Not authenticated';
+    END IF;
+
+    -- Lock row
+    SELECT last_energy_update, energy, max_energy
+    INTO v_last_update, v_current_energy, v_max_energy
+    FROM public.users
+    WHERE id = v_user_id
+    FOR UPDATE;
+
+    -- 1. Calculate Regeneration
+    v_minutes_passed := EXTRACT(EPOCH FROM (now() - v_last_update)) / 60;
+    v_points_to_add := FLOOR(v_minutes_passed / v_regen_rate);
+
+    IF v_points_to_add > 0 THEN
+        IF v_current_energy >= v_max_energy THEN
+            -- In overflow: Do not regen, slide window to now
+            v_last_update := now();
+        ELSE
+            -- Normal regen: Cap at max_energy
+            v_current_energy := LEAST(v_max_energy, v_current_energy + v_points_to_add);
+            IF v_current_energy = v_max_energy THEN
+                v_last_update := now();
+            ELSE
+                v_last_update := v_last_update + (v_points_to_add * v_regen_rate * interval '1 minute');
+            END IF;
+        END IF;
+    END IF;
+
+    -- 2. Deduct Cost
+    IF v_current_energy >= cost THEN
+        v_current_energy := v_current_energy - cost;
+        
+        UPDATE public.users
+        SET energy = v_current_energy,
+            last_energy_update = v_last_update
+        WHERE id = v_user_id;
+        
+        RETURN json_build_object('success', true, 'energy', v_current_energy);
+    ELSE
+        RETURN json_build_object('success', false, 'energy', v_current_energy);
+    END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

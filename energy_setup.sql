@@ -36,13 +36,19 @@ BEGIN
     v_points_to_add := FLOOR(v_minutes_passed / v_regen_rate);
 
     IF v_points_to_add > 0 THEN
-        v_current_energy := LEAST(v_max_energy, v_current_energy + v_points_to_add);
-        -- Update time base to now roughly, but keeping track of intervals is better
-        -- For simplicity in MVP: Reset time base if we hit max, otherwise increment
-        IF v_current_energy = v_max_energy THEN
+        IF v_current_energy >= v_max_energy THEN
+            -- In overflow: Do not regen, but update the time base to now 
+            -- so regen starts fresh ONLY after they drop below max
             v_last_update := now();
         ELSE
-            v_last_update := v_last_update + (v_points_to_add * v_regen_rate * interval '1 minute');
+            -- Normal regen: Cap at max_energy
+            v_current_energy := LEAST(v_max_energy, v_current_energy + v_points_to_add);
+            -- Update time base
+            IF v_current_energy = v_max_energy THEN
+                v_last_update := now();
+            ELSE
+                v_last_update := v_last_update + (v_points_to_add * v_regen_rate * interval '1 minute');
+            END IF;
         END IF;
     END IF;
 
