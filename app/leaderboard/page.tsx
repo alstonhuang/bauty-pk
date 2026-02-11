@@ -71,7 +71,7 @@ export default function LeaderboardPage() {
           wins, 
           matches,
           user_id,
-          user_profiles!inner(username, display_name)
+          user_profiles(username, display_name)
         `)
         .order("score", { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
@@ -87,8 +87,8 @@ export default function LeaderboardPage() {
         matches: item.matches,
         users: item.user_profiles ? {
           email: 'hidden@example.com',
-          username: item.user_profiles.username,
-          display_name: item.user_profiles.display_name
+          username: Array.isArray(item.user_profiles) ? item.user_profiles[0]?.username : item.user_profiles?.username,
+          display_name: Array.isArray(item.user_profiles) ? item.user_profiles[0]?.display_name : item.user_profiles?.display_name
         } : null
       }));
 

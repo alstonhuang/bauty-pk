@@ -347,16 +347,28 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result, 
 
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="bg-black/60 backdrop-blur-md px-6 py-2 rounded-2xl border-2 border-yellow-400/50 shadow-[0_0_30px_rgba(234,179,8,0.3)]"
-                >
-                  <span className="text-yellow-400 font-black text-3xl md:text-4xl italic tracking-tighter">
-                    WINNER {result.gained > 0 && <span className="text-white ml-2">+{result.gained}</span>}
-                  </span>
-                </motion.div>
+                <AnimatePresence>
+                  {result.gained > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0, rotate: -10 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                      className="bg-black/80 backdrop-blur-xl px-8 py-3 rounded-full border-2 border-yellow-400 shadow-[0_0_50px_rgba(234,179,8,0.5)] flex items-center gap-3"
+                    >
+                      <span className="text-yellow-400 font-black text-3xl md:text-5xl italic tracking-tighter drop-shadow-lg">
+                        WINNER
+                      </span>
+                      <motion.span
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-white font-black text-3xl md:text-5xl"
+                      >
+                        +{result.gained}
+                      </motion.span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             </motion.div>
           )}

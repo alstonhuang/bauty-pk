@@ -180,7 +180,7 @@ export default function Header() {
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10 overflow-hidden group-hover:ring-pink-500 transition-all">
                         {profile?.avatar_url ? (
                           <div className="w-full h-full relative">
-                            <Image src={profile.avatar_url} alt="Profile" fill className="object-cover" />
+                            <Image src={profile.avatar_url} alt="Profile" fill className="object-cover" unoptimized />
                           </div>
                         ) : (
                           (profile?.display_name?.[0] || user.email?.charAt(0) || "?").toUpperCase()
