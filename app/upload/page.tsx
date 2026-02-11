@@ -64,7 +64,24 @@ export default function UploadPage() {
         .from('photos')
         .getPublicUrl(filePath)
 
-      // 3. Insert record into DB
+      // 3. Ensure public.users record exists (Self-healing)
+      // This prevents "photos_user_id_fkey" errors if the DB trigger failed
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (userError || !userData) {
+        console.log('User record missing in public.users, creating it now...');
+        await supabase
+          .from('users')
+          .insert([{ id: user.id, email: user.email }])
+          .select()
+          .single();
+      }
+
+      // 4. Insert record into DB
       const { error: dbError } = await supabase
         .from('photos')
         .insert([
