@@ -24,10 +24,15 @@ export default function PKPage() {
   const [voteResult, setVoteResult] = useState<{ winnerId: string; gained: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchMatch = async (isRetry = false) => {
+  const fetchMatch = async (excludeIds: string[] = []) => {
     try {
-      if (!isRetry) setLoading(true);
-      const res = await fetch('/api/match/random', { cache: 'no-store' });
+      setLoading(true);
+      // Cache-busting with timestamp + pass current IDs to exclude for variety
+      const params = new URLSearchParams({
+        t: Date.now().toString(),
+        exclude: excludeIds.join(',')
+      });
+      const res = await fetch(`/api/match/random?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch match');
       const data = await res.json();
       setMatch(data);
@@ -113,7 +118,9 @@ export default function PKPage() {
 
         // Auto-refresh after delay
         setTimeout(() => {
-          fetchMatch();
+          // Pass current IDs to exclude them from the next immediate match for variety
+          const currentIds = match?.photos.map(p => p.id) || [];
+          fetchMatch(currentIds);
         }, 2000);
       }
     } catch (err) {

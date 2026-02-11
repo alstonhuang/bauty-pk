@@ -4,9 +4,15 @@ import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const excludeStr = searchParams.get('exclude');
+  const excludeIds = excludeStr ? excludeStr.split(',') : [];
+
   // Use RPC for fair matchmaking (includes Self-PK fix and Match-count fairness)
-  const { data: selected, error } = await supabase.rpc('get_fair_match');
+  const { data: selected, error } = await supabase.rpc('get_fair_match', {
+    exclude_ids: excludeIds
+  });
 
   if (error) {
     console.error('Matchmaking RPC Error:', error);
