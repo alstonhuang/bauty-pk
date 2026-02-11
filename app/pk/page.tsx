@@ -354,7 +354,7 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result, 
                   className="bg-black/60 backdrop-blur-md px-6 py-2 rounded-2xl border-2 border-yellow-400/50 shadow-[0_0_30px_rgba(234,179,8,0.3)]"
                 >
                   <span className="text-yellow-400 font-black text-3xl md:text-4xl italic tracking-tighter">
-                    WINNER <span className="text-white ml-2">+{result.gained}</span>
+                    WINNER {result.gained > 0 && <span className="text-white ml-2">+{result.gained}</span>}
                   </span>
                 </motion.div>
               </motion.div>
