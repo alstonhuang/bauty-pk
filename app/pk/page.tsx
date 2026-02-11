@@ -24,11 +24,13 @@ export default function PKPage() {
   const [votingState, setVotingState] = useState<'idle' | 'voting' | 'result'>('idle');
   const [voteResult, setVoteResult] = useState<{ winnerId: string; gained: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState({ a: false, b: false });
 
   const fetchMatch = async (excludeIds: string[] = []) => {
     try {
       setLoading(true);
-      // Cache-busting with timestamp + pass current IDs to exclude for variety
+      setImagesLoaded({ a: false, b: false }); // Hide images during transition
+
       const params = new URLSearchParams({
         t: Date.now().toString(),
         exclude: excludeIds.join(',')
@@ -61,46 +63,39 @@ export default function PKPage() {
   const handleVote = async (winnerId: string, loserId: string) => {
     if (votingState !== 'idle') return;
 
+    // 1. Optimistic UI: Show winner/loser state immediately
+    setVoteResult({ winnerId, gained: 0 }); // Points will be updated later
+    setVotingState('voting');
+
     try {
-      // 1. Check Auth & Handle Energy
+      // 2. Check Auth & Handle Energy (Async)
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
       if (user) {
-        // Logged in: Consume DB Energy
-        setVotingState('voting');
         const { data: energyData, error: energyError } = await (supabase as any).rpc('consume_energy', { cost: 1 });
-
-        if (energyError) {
-          setError('Energy System Error: ' + energyError.message);
+        if (energyError || !(energyData as any).success) {
+          setError(energyError ? 'Energy Error: ' + energyError.message : '⚡ Not enough energy!');
           setVotingState('idle');
-          return;
-        }
-
-        const { success } = energyData as any;
-        if (!success) {
-          setError('⚡ Not enough energy! Wait for it to regenerate.');
-          setVotingState('idle');
+          setVoteResult(null);
           return;
         }
       } else {
-        // Anonymous: Local Trial Energy
         const anonEnergy = parseInt(localStorage.getItem('anon_energy') ?? '5');
-
         if (anonEnergy <= 0) {
-          setError('🎁 Trial Ended! Sign up for 10 Energy + Auto-Regen.');
-          // Don't set voting state to voting to let them see the error and stay on page
+          setError('🎁 Trial Ended! Sign up for 10 Energy.');
+          setVotingState('idle');
+          setVoteResult(null);
           return;
         }
-
         localStorage.setItem('anon_energy', (anonEnergy - 1).toString());
-        setVotingState('voting');
-
-        // Dispatch event for Header to update
         window.dispatchEvent(new Event('storage'));
       }
 
-      // 2. Proceed with Vote
+      // 3. Show Result Transition (Trophy)
+      setVotingState('result');
+
+      // 4. Record Vote in Backend
       const res = await fetch('/api/match/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,21 +107,18 @@ export default function PKPage() {
       });
 
       const data = await res.json();
-
       if (data.success) {
         setVoteResult({ winnerId, gained: data.points_gained });
-        setVotingState('result');
-
-        // Auto-refresh after delay
         setTimeout(() => {
-          // Pass current IDs to exclude them from the next immediate match for variety
           const currentIds = match?.photos.map(p => p.id) || [];
           fetchMatch(currentIds);
         }, 2000);
       }
     } catch (err) {
       console.error('Vote failed', err);
+      setError('Connection failed. Please retry.');
       setVotingState('idle');
+      setVoteResult(null);
     }
   };
 
@@ -190,6 +182,8 @@ export default function PKPage() {
         onVote={handleVote}
         votingState={votingState}
         result={voteResult}
+        isReady={imagesLoaded.a && imagesLoaded.b}
+        onLoad={() => setImagesLoaded(prev => ({ ...prev, a: true }))}
       />
 
       {/* RIGHT SIDE */}
@@ -200,12 +194,41 @@ export default function PKPage() {
         onVote={handleVote}
         votingState={votingState}
         result={voteResult}
+        isReady={imagesLoaded.a && imagesLoaded.b}
+        onLoad={() => setImagesLoaded(prev => ({ ...prev, b: true }))}
       />
+
+      {/* OVERLAY LOADING (For next match) */}
+      <AnimatePresence>
+        {(loading || !imagesLoaded.a || !imagesLoaded.b) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-[100] bg-[#0a0a0f] flex flex-col items-center justify-center"
+          >
+            <div className="flex flex-col items-center gap-6">
+              <RefreshCw className="w-12 h-12 text-pink-500 animate-spin" />
+              <div className="flex flex-col items-center gap-2">
+                <p className="text-xl font-black italic tracking-[0.2em] text-white/80">PREPARING ARENA</p>
+                <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    className="h-full bg-pink-500"
+                    initial={{ width: "0%" }}
+                    animate={{ width: "100%" }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
-function ContestantSide({ photo, opponentId, side, onVote, votingState, result }: any) {
+function ContestantSide({ photo, opponentId, side, onVote, votingState, result, isReady, onLoad }: any) {
   const isWinner = result?.winnerId === photo.id;
   const isLoser = result?.winnerId && result?.winnerId !== photo.id;
   const disabled = votingState !== 'idle';
@@ -218,16 +241,19 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
       transition-all duration-700
       ${isLoser ? 'grayscale opacity-30 contrast-125' : ''}
       ${isWinner ? 'bg-gradient-to-b from-pink-500/10 to-purple-500/10' : ''}
+      ${!isReady ? 'opacity-0' : 'opacity-100'}
       group
     `}>
 
       {/* 1. Image Container (Strictly constrained) */}
       <div className="relative w-full h-[60%] flex items-center justify-center p-4">
         {/* Background Blur */}
-        <div
-          className="absolute inset-0 opacity-20 blur-3xl scale-90"
-          style={{ backgroundImage: `url(${photo.url})`, backgroundPosition: 'center', backgroundSize: 'cover' }}
-        />
+        {isReady && (
+          <div
+            className="absolute inset-0 opacity-20 blur-3xl scale-90"
+            style={{ backgroundImage: `url(${photo.url})`, backgroundPosition: 'center', backgroundSize: 'cover' }}
+          />
+        )}
 
         {/* Main Image Wrapper: FORCE HEIGHT VIA INLINE STYLE */}
         <div
@@ -240,6 +266,7 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             priority
+            onLoad={onLoad}
             style={{ objectFit: 'contain' }}
             className={`
                  rounded-lg shadow-2xl p-4
@@ -280,13 +307,16 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result }
                       y: [0, -15, 0]
                     }}
                     transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-                    className="relative z-10 filter drop-shadow-[0_0_30px_rgba(234,179,8,0.4)]"
+                    className="relative z-10 w-40 h-40 md:w-64 md:h-64 filter drop-shadow-[0_0_30px_rgba(234,179,8,0.4)]"
                   >
                     <div className="absolute inset-0 bg-yellow-500/30 blur-[60px] rounded-full scale-75 animate-pulse" />
-                    <img
+                    <Image
                       src="/victory-trophy.png"
                       alt="Victory Trophy"
-                      className="w-40 h-40 md:w-64 md:h-64 object-contain relative z-10"
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 160px, 256px"
+                      className="object-contain relative z-10"
                     />
                   </motion.div>
 
