@@ -1,21 +1,33 @@
--- RECREATED: Mixed Probability Matchmaking RPC (v5)
--- This version adds supports for excluding IDs to prevent immediate repeats.
+-- RECREATED: Mixed Probability Matchmaking RPC (v6)
+-- Adds "Best Effort" exclusion: if the pool is too small (<2) with exclusions, 
+-- it automatically falls back to full library to prevent "No competitors found".
 CREATE OR REPLACE FUNCTION public.get_fair_match(exclude_ids uuid[] DEFAULT '{}')
 RETURNS SETOF public.photos AS $$
 DECLARE
   v_rand float := random();
+  v_pool_count integer;
 BEGIN
+    -- Check if exclusion is possible
+    SELECT count(*) INTO v_pool_count 
+    FROM public.photos 
+    WHERE is_active = true AND id != ALL(exclude_ids);
+
+    -- If pool is too small to find a match with exclusions, ignore the exclusion list
+    IF v_pool_count < 2 THEN
+        exclude_ids := '{}';
+    END IF;
+
     RETURN QUERY
     WITH p1 AS (
       -- 1. Mixed Strategy for Photo A
       SELECT * FROM (
         SELECT * FROM public.photos 
         WHERE is_active = true 
-        AND id != ALL(exclude_ids) -- Exclude specific photos (e.g., from last match)
+        AND id != ALL(exclude_ids)
         ORDER BY 
           CASE WHEN v_rand > 0.5 THEN matches ELSE 0 END ASC,
           random() ASC
-        LIMIT 30 -- Increased pool size for more variety
+        LIMIT 30
       ) sub1
       ORDER BY random() 
       LIMIT 1
@@ -25,7 +37,7 @@ BEGIN
       SELECT * FROM public.photos 
       WHERE is_active = true 
       AND id NOT IN (SELECT id FROM p1)
-      AND id != ALL(exclude_ids) -- Also exclude from the second slot if possible
+      AND id != ALL(exclude_ids)
       ORDER BY random() 
       LIMIT 1
     )
