@@ -27,7 +27,7 @@ A premium photo voting platform where users can upload photos and compete in hea
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd synthetic-kilonova
+   cd beauty-pk
    ```
 
 2. **Install dependencies**
@@ -118,7 +118,7 @@ For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
 ## 📁 Project Structure
 
 ```
-synthetic-kilonova/
+beauty-pk/
 ├── app/
 │   ├── api/              # API routes
 │   ├── components/       # Reusable components
