@@ -55,15 +55,14 @@ export default function PKPage() {
   const handleVote = async (winnerId: string, loserId: string) => {
     if (votingState !== 'idle') return;
 
-    setVotingState('voting');
-
     try {
       // 1. Check Auth & Handle Energy
       const { data: { session } } = await supabase.auth.getSession();
       const user = session?.user;
 
       if (user) {
-        // Logged in: Consume Energy
+        // Logged in: Consume DB Energy
+        setVotingState('voting');
         const { data: energyData, error: energyError } = await (supabase as any).rpc('consume_energy', { cost: 1 });
 
         if (energyError) {
@@ -73,15 +72,29 @@ export default function PKPage() {
         }
 
         const { success } = energyData as any;
-
         if (!success) {
           setError('⚡ Not enough energy! Wait for it to regenerate.');
           setVotingState('idle');
           return;
         }
+      } else {
+        // Anonymous: Local Trial Energy
+        const anonEnergy = parseInt(localStorage.getItem('anon_energy') ?? '5');
+
+        if (anonEnergy <= 0) {
+          setError('🎁 Trial Ended! Sign up for 10 Energy + Auto-Regen.');
+          // Don't set voting state to voting to let them see the error and stay on page
+          return;
+        }
+
+        localStorage.setItem('anon_energy', (anonEnergy - 1).toString());
+        setVotingState('voting');
+
+        // Dispatch event for Header to update
+        window.dispatchEvent(new Event('storage'));
       }
 
-      // 2. Proceed with Vote (Works for both Auth and Anon)
+      // 2. Proceed with Vote
       const res = await fetch('/api/match/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -89,7 +102,6 @@ export default function PKPage() {
           match_id: match?.match_id,
           winner_id: winnerId,
           loser_id: loserId,
-          // voter_id is handled by the backend session or null for anon
         }),
       });
 

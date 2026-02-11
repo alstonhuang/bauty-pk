@@ -42,3 +42,7 @@ Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allow
  GET /api/auth/line/callback?code=6Yy4zQzNcJrsr3MQYNmT&state=xmglw8 307 in 2.1s (compile: 45ms, render: 2.1s)
 ✓ Compiled in 448ms
 ✓ Compiled in 221ms
+✓ Compiled in 247ms
+✓ Compiled in 347ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /workflows 404 in 713ms (compile: 211ms, render: 502ms)

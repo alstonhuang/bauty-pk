@@ -153,56 +153,96 @@ export default function Header() {
 
             {/* Auth Section */}
             <li className="pl-4 border-l border-white/10">
-              {user ? (
-                <div className="flex items-center gap-4">
-                  {/* Energy Display */}
-                  <div className="hidden md:flex flex-col items-end mr-2">
-                    <div className={`flex items-center gap-1 text-xs font-bold ${energy && energy > 10 ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
-                      <span>⚡</span>
-                      <span>{energy !== null ? energy : '--'} / 10</span>
-                      {energy && energy > 10 && <span className="text-[10px] ml-1">(OVERFLOW)</span>}
+              <div className="flex items-center gap-4">
+                {user ? (
+                  <>
+                    {/* Energy Display */}
+                    <div className="hidden md:flex flex-col items-end mr-2">
+                      <div className={`flex items-center gap-1 text-xs font-bold ${energy && energy > 10 ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
+                        <span>⚡</span>
+                        <span>{energy !== null ? energy : '--'} / 10</span>
+                        {energy && energy > 10 && <span className="text-[10px] ml-1">(OVERFLOW)</span>}
+                      </div>
+                      <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${Math.min(100, ((energy || 0) / 10) * 100)}%` }}
+                          className={`h-full ${energy && energy > 10 ? "bg-gradient-to-r from-yellow-400 to-orange-500" : "bg-gradient-to-r from-pink-500 to-purple-500"} transition-all duration-500 ease-out`}
+                        />
+                      </div>
                     </div>
-                    <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${Math.min(100, ((energy || 0) / 10) * 100)}%` }}
-                        className={`h-full ${energy && energy > 10 ? "bg-gradient-to-r from-yellow-400 to-orange-500" : "bg-gradient-to-r from-pink-500 to-purple-500"} transition-all duration-500 ease-out`}
-                      />
-                    </div>
-                  </div>
 
-                  <Link
-                    href={profile ? `/user/${profile.username}` : '/profile/edit'}
-                    className="hidden md:flex items-center gap-2 group relative"
-                  >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10 overflow-hidden group-hover:ring-pink-500 transition-all">
-                      {profile?.avatar_url ? (
-                        <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                      ) : (
-                        (profile?.display_name?.[0] || user.email?.charAt(0) || "?").toUpperCase()
-                      )}
-                    </div>
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="text-white/40 hover:text-red-400 transition-colors"
-                  >
-                    <LogOut className="w-5 h-5" />
-                  </button>
-                </div>
-              ) : (
-                <Link
-                  href="/login"
-                  className={`btn-primary px-5 py-2 text-sm rounded-full shadow-lg hover:shadow-pink-500/20 active:scale-95 transition-all flex items-center gap-2`}
-                >
-                  <UserIcon className="w-4 h-4" />
-                  Login
-                </Link>
-              )}
+                    <Link
+                      href={profile ? `/user/${profile.username}` : '/profile/edit'}
+                      className="hidden md:flex items-center gap-2 group relative"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center text-xs font-bold text-white shadow-lg ring-2 ring-white/10 overflow-hidden group-hover:ring-pink-500 transition-all">
+                        {profile?.avatar_url ? (
+                          <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          (profile?.display_name?.[0] || user.email?.charAt(0) || "?").toUpperCase()
+                        )}
+                      </div>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="text-white/40 hover:text-red-400 transition-colors"
+                    >
+                      <LogOut className="w-5 h-5" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="flex items-center gap-4">
+                    {/* Anonymous Trial Energy */}
+                    <AnonymousEnergy />
+                    <Link
+                      href="/login"
+                      className={`btn-primary px-5 py-2 text-sm rounded-full shadow-lg hover:shadow-pink-500/20 active:scale-95 transition-all flex items-center gap-2`}
+                    >
+                      <UserIcon className="w-4 h-4" />
+                      Login
+                    </Link>
+                  </div>
+                )}
+              </div>
             </li>
           </ul>
         </nav>
       </div>
     </motion.header>
+  );
+}
+
+function AnonymousEnergy() {
+  const [anonEnergy, setAnonEnergy] = useState<number>(5);
+
+  const updateEnergy = () => {
+    const energy = localStorage.getItem('anon_energy');
+    if (energy !== null) {
+      setAnonEnergy(parseInt(energy));
+    } else {
+      localStorage.setItem('anon_energy', '5');
+    }
+  };
+
+  useEffect(() => {
+    updateEnergy();
+    window.addEventListener('storage', updateEnergy);
+    return () => window.removeEventListener('storage', updateEnergy);
+  }, []);
+
+  return (
+    <div className="hidden sm:flex flex-col items-end">
+      <div className="flex items-center gap-1 text-[10px] font-bold text-white/40">
+        <span className="bg-white/10 px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider mr-1">Trial</span>
+        <span>{anonEnergy} / 5</span>
+      </div>
+      <div className="w-16 h-1 bg-white/5 rounded-full mt-1 overflow-hidden">
+        <div
+          className="h-full bg-white/20 transition-all duration-300"
+          style={{ width: `${(anonEnergy / 5) * 100}%` }}
+        />
+      </div>
+    </div>
   );
 }
