@@ -44,25 +44,28 @@ export default function LeaderboardPage() {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const ITEMS_PER_PAGE = 20;
 
   useEffect(() => {
     fetchLeaderboard();
-  }, [currentPage]);
+  }, [currentPage, selectedCategory]);
 
   const fetchLeaderboard = async () => {
     try {
       setLoading(true);
 
       // Get total count
-      const { count } = await supabase
-        .from("photos")
-        .select("*", { count: 'exact', head: true });
+      let queryCount = supabase.from("photos").select("*", { count: 'exact', head: true });
+      if (selectedCategory !== 'All') {
+        queryCount = queryCount.eq('category', selectedCategory);
+      }
+      const { count } = await queryCount;
 
       setTotalCount(count || 0);
 
       // Get paginated data
-      const { data, error } = await supabase
+      let query = supabase
         .from("photos")
         .select(`
           id, 
@@ -72,7 +75,13 @@ export default function LeaderboardPage() {
           matches,
           user_id,
           user_profiles(username, display_name)
-        `)
+        `);
+
+      if (selectedCategory !== 'All') {
+        query = query.eq('category', selectedCategory);
+      }
+
+      const { data, error } = await query
         .order("score", { ascending: false })
         .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
@@ -144,7 +153,28 @@ export default function LeaderboardPage() {
         <h1 className="text-5xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-pink-400 to-purple-500 pb-2">
           Leaderboard
         </h1>
-        <p className="text-white/60 text-lg">The world's most stunning visuals, ranked by you.</p>
+        <p className="text-white/60 text-lg mb-8">The world's most stunning visuals, ranked by you.</p>
+
+        {/* Category Tabs */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8 p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto">
+          {['All', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setSelectedCategory(cat);
+                setCurrentPage(1); // Reset to page 1
+              }}
+              className={`
+                px-5 py-2 rounded-xl text-sm font-bold tracking-tight transition-all
+                ${selectedCategory === cat
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                  : 'text-white/40 hover:text-white hover:bg-white/5'}
+              `}
+            >
+              {cat.toUpperCase()}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       <div className="flex flex-col gap-4">

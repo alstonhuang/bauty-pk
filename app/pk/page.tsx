@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { supabase } from '@/lib/supabaseClient';
+import { useMotionValue, useSpring, useTransform, animate } from 'framer-motion';
 
 type Photo = {
   id: string;
@@ -25,15 +26,17 @@ export default function PKPage() {
   const [voteResult, setVoteResult] = useState<{ winnerId: string; gained: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState({ a: false, b: false });
+  const [selectedCategory, setSelectedCategory] = useState('All');
 
-  const fetchMatch = async (excludeIds: string[] = []) => {
+  const fetchMatch = async (excludeIds: string[] = [], category = selectedCategory) => {
     try {
       setLoading(true);
       setImagesLoaded({ a: false, b: false }); // Hide images during transition
 
       const params = new URLSearchParams({
         t: Date.now().toString(),
-        exclude: excludeIds.join(',')
+        exclude: excludeIds.join(','),
+        category: category
       });
       const res = await fetch(`/api/match/random?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch match');
@@ -159,6 +162,29 @@ export default function PKPage() {
         <span className="font-black italic text-4xl md:text-7xl bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">VS</span>
       </div>
 
+      {/* Category Selector */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-1.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+        {['All', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+          <button
+            key={cat}
+            onClick={() => {
+              if (selectedCategory !== cat) {
+                setSelectedCategory(cat);
+                fetchMatch([], cat);
+              }
+            }}
+            className={`
+              px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all
+              ${selectedCategory === cat
+                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
+                : 'text-white/40 hover:text-white hover:bg-white/5'}
+            `}
+          >
+            {cat.toUpperCase()}
+          </button>
+        ))}
+      </div>
+
       {/* Custom Toast Notification */}
       <AnimatePresence>
         {error && (
@@ -226,6 +252,18 @@ export default function PKPage() {
       </AnimatePresence>
     </div>
   );
+}
+
+function AnimatedCounter({ value }: { value: number }) {
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (latest) => Math.round(latest));
+
+  useEffect(() => {
+    const controls = animate(count, value, { duration: 1, ease: "easeOut" });
+    return () => controls.stop();
+  }, [value, count]);
+
+  return <motion.span>{rounded}</motion.span>;
 }
 
 function ContestantSide({ photo, opponentId, side, onVote, votingState, result, isReady, onLoad }: any) {
@@ -364,7 +402,7 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result, 
                         transition={{ delay: 0.1 }}
                         className="text-white font-black text-3xl md:text-5xl"
                       >
-                        +{result.gained}
+                        +<AnimatedCounter value={result.gained} />
                       </motion.span>
                     </motion.div>
                   )}

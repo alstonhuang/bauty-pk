@@ -3,8 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
-import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft } from "lucide-react";
+import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 
 type UserProfile = {
@@ -133,10 +134,12 @@ export default function UserProfilePage() {
       {/* Banner */}
       <div className="relative h-64 md:h-80 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-500 overflow-hidden">
         {profile.banner_url && (
-          <img
+          <Image
             src={profile.banner_url}
             alt="Banner"
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            priority
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -164,11 +167,15 @@ export default function UserProfilePage() {
             <div className="relative">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden ring-4 ring-white/20 bg-gradient-to-br from-pink-500 to-purple-500">
                 {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.display_name}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="relative w-full h-full">
+                    <Image
+                      src={profile.avatar_url}
+                      alt={profile.display_name}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-6xl font-bold text-white">
                     {profile.display_name[0].toUpperCase()}
@@ -273,11 +280,15 @@ export default function UserProfilePage() {
                     whileHover={{ scale: 1.05 }}
                     className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer bg-white/5"
                   >
-                    <img
-                      src={photo.url}
-                      alt="Photo"
-                      className="w-full h-full object-cover"
-                    />
+                    <div className="relative w-full h-full">
+                      <Image
+                        src={photo.url}
+                        alt="Photo"
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-2 left-2 right-2">
                         <div className="text-yellow-400 font-bold font-mono tabular-nums">{photo.score}</div>

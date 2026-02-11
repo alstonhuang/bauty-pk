@@ -12,6 +12,7 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
+  const [category, setCategory] = useState('General')
   const router = useRouter()
 
   useEffect(() => {
@@ -135,7 +136,8 @@ export default function UploadPage() {
           {
             user_id: user.id,
             url: publicUrl,
-            score: 1000 // Default score
+            score: 1000, // Default score
+            category: category
           }
         ])
 
@@ -218,10 +220,35 @@ export default function UploadPage() {
           </div>
         </div>
 
+        {/* Category Selection */}
+        <div className="w-full space-y-2">
+          <label className="text-sm font-medium text-white/60 ml-1">Select Category</label>
+          <div className="grid grid-cols-2 gap-2">
+            {['General', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                className={`
+                  py-2 px-3 rounded-lg text-sm font-medium transition-all
+                  ${category === cat
+                    ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]'
+                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/5'}
+                `}
+              >
+                {cat === 'General' && '🌐 General'}
+                {cat === 'Anime' && '🎨 Anime'}
+                {cat === 'Realistic' && '📸 Realistic'}
+                {cat === 'Pets' && '🐱 Pets'}
+                {cat === 'Landscape' && '🏔️ Landscape'}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <button
           onClick={handleUpload}
           disabled={!file || uploading}
-          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
         >
           {uploading ? 'Processing...' : 'Upload Now'}
         </button>
