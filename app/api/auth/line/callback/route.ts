@@ -70,7 +70,9 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    if (createError && !createError.message.includes('already exists')) {
+    if (createError &&
+      !createError.message.toLowerCase().includes('already') &&
+      !createError.message.toLowerCase().includes('exists')) {
       console.error('Supabase Admin Create User Error:', createError)
       throw createError
     }
