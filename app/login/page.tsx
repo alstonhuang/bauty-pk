@@ -1,13 +1,25 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Sparkles, ArrowRight, ShieldCheck, Mail } from 'lucide-react'
+import { Sparkles, ArrowRight, ShieldCheck, Mail, AlertCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Check for error in URL (from callback)
+    const params = new URLSearchParams(window.location.search)
+    const error = params.get('error')
+    if (error) {
+      setMessage({
+        type: 'error',
+        text: `Authentication failed: ${decodeURIComponent(error)}`
+      })
+    }
+  }, [])
 
   const handleLogin = async (provider: 'google' | 'line') => {
     try {
@@ -121,8 +133,8 @@ export default function LoginPage() {
                 className={`mt-8 overflow-hidden`}
               >
                 <div className={`p-4 rounded-2xl text-[13px] font-medium border ${message.type === 'success'
-                    ? 'bg-green-500/5 text-green-400 border-green-500/20'
-                    : 'bg-red-500/5 text-red-400 border-red-500/20'
+                  ? 'bg-green-500/5 text-green-400 border-green-500/20'
+                  : 'bg-red-500/5 text-red-400 border-red-500/20'
                   }`}>
                   {message.text}
                 </div>
@@ -161,8 +173,8 @@ function LoginButton({ provider, loading, onClick }: { provider: 'google' | 'lin
       disabled={loading}
       onClick={onClick}
       className={`relative w-full h-[60px] rounded-2xl flex items-center justify-center gap-4 font-bold text-[15px] shadow-lg transition-all disabled:opacity-50 group overflow-hidden ${isLine
-          ? 'bg-[#06C755] text-white hover:bg-[#05b34c]'
-          : 'bg-white text-gray-900 shadow-white/5'
+        ? 'bg-[#06C755] text-white hover:bg-[#05b34c]'
+        : 'bg-white text-gray-900 shadow-white/5'
         }`}
     >
       <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/10 to-white/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out" />
