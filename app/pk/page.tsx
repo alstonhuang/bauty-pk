@@ -162,27 +162,30 @@ export default function PKPage() {
         <span className="font-black italic text-4xl md:text-7xl bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">VS</span>
       </div>
 
-      {/* Category Selector */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-1.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
-        {['All', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => {
-              if (selectedCategory !== cat) {
-                setSelectedCategory(cat);
-                fetchMatch([], cat);
-              }
-            }}
-            className={`
-              px-4 py-2 rounded-xl text-xs font-bold tracking-wider transition-all
-              ${selectedCategory === cat
-                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
-                : 'text-white/40 hover:text-white hover:bg-white/5'}
-            `}
-          >
-            {cat.toUpperCase()}
-          </button>
-        ))}
+      {/* Top Controls - Category Selector */}
+      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 w-[90%] md:w-auto">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 p-1 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+          {['All', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                if (selectedCategory !== cat) {
+                  setSelectedCategory(cat);
+                  fetchMatch([], cat);
+                }
+              }}
+              className={`
+                px-4 py-2 rounded-xl text-[10px] md:text-xs font-black tracking-[0.1em] transition-all
+                ${selectedCategory === cat
+                  ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]'
+                  : 'text-white/30 hover:text-white hover:bg-white/5'}
+              `}
+            >
+              {cat.toUpperCase()}
+            </button>
+          ))}
+        </div>
+        <div className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase">Arena Mode</div>
       </div>
 
       {/* Custom Toast Notification */}
