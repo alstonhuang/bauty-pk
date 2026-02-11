@@ -157,14 +157,16 @@ export default function Header() {
                 <div className="flex items-center gap-4">
                   {/* Energy Display */}
                   <div className="hidden md:flex flex-col items-end mr-2">
-                    <div className="flex items-center gap-1 text-xs font-bold text-pink-400">
+                    <div className={`flex items-center gap-1 text-xs font-bold ${energy && energy > 10 ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
                       <span>⚡</span>
                       <span>{energy !== null ? energy : '--'} / 10</span>
+                      {energy && energy > 10 && <span className="text-[10px] ml-1">(OVERFLOW)</span>}
                     </div>
                     <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500 ease-out"
-                        style={{ width: `${((energy || 0) / 10) * 100}%` }}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min(100, ((energy || 0) / 10) * 100)}%` }}
+                        className={`h-full ${energy && energy > 10 ? "bg-gradient-to-r from-yellow-400 to-orange-500" : "bg-gradient-to-r from-pink-500 to-purple-500"} transition-all duration-500 ease-out`}
                       />
                     </div>
                   </div>

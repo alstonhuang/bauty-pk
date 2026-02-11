@@ -58,31 +58,30 @@ export default function PKPage() {
     setVotingState('voting');
 
     try {
-      // 1. Consume Energy (RPC Check)
-      // We check this client-side first via RPC to give instant feedback, 
-      // although arguably the API route could do it. 
-      // Doing it here allows us to stop the "Vote" fetch if energy is low.
-      const { data: energyData, error: energyError } = await (supabase as any).rpc('consume_energy', { cost: 1 });
+      // 1. Check Auth & Handle Energy
+      const { data: { session } } = await supabase.auth.getSession();
+      const user = session?.user;
 
-      if (energyError) {
-        setError('Energy System Error: ' + energyError.message);
-        setVotingState('idle');
-        return;
+      if (user) {
+        // Logged in: Consume Energy
+        const { data: energyData, error: energyError } = await (supabase as any).rpc('consume_energy', { cost: 1 });
+
+        if (energyError) {
+          setError('Energy System Error: ' + energyError.message);
+          setVotingState('idle');
+          return;
+        }
+
+        const { success } = energyData as any;
+
+        if (!success) {
+          setError('⚡ Not enough energy! Wait for it to regenerate.');
+          setVotingState('idle');
+          return;
+        }
       }
 
-      const { success, energy: remainingEnergy, message } = energyData as any;
-
-      if (!success) {
-        setError('⚡ Not enough energy! Wait for it to regenerate.');
-        setVotingState('idle');
-        return;
-      }
-
-      // Force a slight UI update for the header to pick up the new energy? 
-      // The interval in Header will eventually pick it up, or we can use an event bus.
-      // For now, rely on interval or page refresh.
-
-      // 2. Proceed with Vote
+      // 2. Proceed with Vote (Works for both Auth and Anon)
       const res = await fetch('/api/match/vote', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -90,6 +89,7 @@ export default function PKPage() {
           match_id: match?.match_id,
           winner_id: winnerId,
           loser_id: loserId,
+          // voter_id is handled by the backend session or null for anon
         }),
       });
 

@@ -40,3 +40,5 @@ Read more: https://nextjs.org/docs/app/api-reference/config/next-config-js/allow
  GET /login 200 in 19ms (compile: 3ms, render: 16ms)
  GET /login 200 in 25ms (compile: 6ms, render: 19ms)
  GET /api/auth/line/callback?code=6Yy4zQzNcJrsr3MQYNmT&state=xmglw8 307 in 2.1s (compile: 45ms, render: 2.1s)
+✓ Compiled in 448ms
+✓ Compiled in 221ms

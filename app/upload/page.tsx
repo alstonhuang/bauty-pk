@@ -77,7 +77,14 @@ export default function UploadPage() {
 
       if (dbError) throw dbError
 
-      setMessage('Upload successful! Redirecting to gallery...')
+      // 4. Add Energy Bonus (+5)
+      try {
+        await supabase.rpc('add_energy', { amount: 5 });
+      } catch (e) {
+        console.error('Failed to add energy bonus:', e);
+      }
+
+      setMessage('Upload successful! +5 Energy Bonus Granted! Redirecting...')
 
       // Delay to show success message
       setTimeout(() => {
