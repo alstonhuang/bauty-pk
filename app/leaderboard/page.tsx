@@ -56,34 +56,57 @@ export default function LeaderboardPage() {
       setLoading(true);
 
       // Get total count
-      let queryCount = supabase.from("photos").select("*", { count: 'exact', head: true });
-      if (selectedCategory !== 'All') {
-        queryCount = queryCount.contains('tags', [selectedCategory]);
+      let queryCount;
+      if (selectedCategory === 'All') {
+        queryCount = supabase.from("photos").select("*", { count: 'exact', head: true });
+      } else {
+        queryCount = supabase.from("photo_tag_stats").select("*", { count: 'exact', head: true }).eq('tag', selectedCategory);
       }
       const { count } = await queryCount;
 
       setTotalCount(count || 0);
 
       // Get paginated data
-      let query = supabase
-        .from("photos")
-        .select(`
-          id, 
-          url, 
-          score, 
-          wins, 
-          matches,
-          user_id,
-          user_profiles(username, display_name)
-        `);
+      let data: any[] = [];
+      let error: any = null;
 
-      if (selectedCategory !== 'All') {
-        query = query.contains('tags', [selectedCategory]);
+      if (selectedCategory === 'All') {
+        const res = await supabase
+          .from("photos")
+          .select(`
+            id, url, score, wins, matches, user_id,
+            user_profiles(username, display_name)
+          `)
+          .order("score", { ascending: false })
+          .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+        data = res.data || [];
+        error = res.error;
+      } else {
+        const res = await supabase
+          .from("photo_tag_stats")
+          .select(`
+            score, wins, matches,
+            photos (
+              id, url, user_id,
+              user_profiles(username, display_name)
+            )
+          `)
+          .eq('tag', selectedCategory)
+          .order("score", { ascending: false })
+          .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
+
+        // Transform tag_stats format to flatten photo data
+        data = (res.data || []).map((item: any) => ({
+          id: item.photos?.id,
+          url: item.photos?.url,
+          score: item.score,
+          wins: item.wins,
+          matches: item.matches,
+          user_id: item.photos?.user_id,
+          user_profiles: item.photos?.user_profiles
+        }));
+        error = res.error;
       }
-
-      const { data, error } = await query
-        .order("score", { ascending: false })
-        .range((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE - 1);
 
       if (error) throw error;
 
@@ -236,8 +259,8 @@ export default function LeaderboardPage() {
                   onClick={() => setSelectedPhoto(photo)}
                 >
                   {/* Rank & Avatar container */}
-                  <div className="flex items-center gap-4 md:gap-8 flex-shrink-0">
-                    <div className="w-10 md:w-14 flex justify-center items-center">
+                  <div className="flex items-center gap-3 md:gap-8 flex-shrink-0">
+                    <div className="w-8 md:w-14 flex justify-center items-center">
                       <RenderRankIcon index={index} />
                     </div>
 
@@ -258,31 +281,31 @@ export default function LeaderboardPage() {
                   </div>
 
                   {/* Name & Title */}
-                  <div className="ml-4 md:ml-8 flex-1 min-w-0 pr-4">
+                  <div className="ml-3 md:ml-8 flex-1 min-w-0 pr-2 md:pr-4">
                     {photo.users?.username ? (
                       <Link
                         href={`/user/${photo.users.username}`}
-                        className="block text-base md:text-lg font-bold text-white/90 hover:text-pink-400 truncate transition group"
+                        className="block text-sm md:text-lg font-bold text-white/90 hover:text-pink-400 truncate transition group"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {photo.users.display_name}
                       </Link>
                     ) : (
-                      <div className="text-base md:text-lg font-bold text-white/60 truncate italic">
+                      <div className="text-sm md:text-lg font-bold text-white/60 truncate italic">
                         Anonymous
                       </div>
                     )}
-                    <div className="text-[10px] md:text-xs text-white/50 uppercase tracking-[0.2em] font-black">Competitor</div>
+                    <div className="text-[9px] md:text-xs text-white/40 uppercase tracking-[0.2em] font-black">Competitor</div>
                   </div>
 
                   {/* Stats Grid */}
                   <div className="flex items-center gap-4 md:gap-10 shrink-0">
                     {/* Score */}
-                    <div className="text-right">
-                      <div className={`text-2xl md:text-3xl font-black font-mono tabular-nums tracking-tighter ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-white/80'}`}>
+                    <div className="text-right flex flex-col items-end">
+                      <div className={`text-xl md:text-3xl font-black font-mono tabular-nums tracking-tighter leading-none ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-white/80'}`}>
                         {photo.score.toLocaleString()}
                       </div>
-                      <div className="text-[9px] md:text-[10px] text-white/50 uppercase tracking-[0.15em] font-bold">Elo Rating</div>
+                      <div className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-[0.15em] font-bold mt-1">Elo Rating</div>
                     </div>
 
                     {/* Win Rate (Desktop only for space) */}

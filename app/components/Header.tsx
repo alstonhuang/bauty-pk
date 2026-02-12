@@ -161,13 +161,12 @@ export default function Header() {
                 {user ? (
                   <>
                     {/* Energy Display */}
-                    <div className="hidden md:flex flex-col items-end mr-2">
-                      <div className={`flex items-center gap-1 text-xs font-bold ${energy && energy.current > energy.max ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
-                        <span>⚡</span>
-                        <span>{energy !== null ? `${energy.current} / ${energy.max}` : '-- / --'}</span>
-                        {energy && energy.current > energy.max && <span className="text-[10px] ml-1">(OVERFLOW)</span>}
+                    <div className="hidden lg:flex flex-col items-end mr-3">
+                      <div className={`flex items-center gap-1.5 text-xs font-bold whitespace-nowrap ${energy && energy.current > energy.max ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
+                        <span className="text-sm">⚡</span>
+                        <span className="font-mono">{energy !== null ? `${energy.current} / ${energy.max}` : '-- / --'}</span>
                       </div>
-                      <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
+                      <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1.5 overflow-hidden border border-white/5">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${Math.min(100, ((energy?.current || 0) / (energy?.max || 10)) * 100)}%` }}

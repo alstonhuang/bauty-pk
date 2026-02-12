@@ -31,6 +31,7 @@ type Achievement = {
   name: string;
   description: string;
   icon_type: string;
+  badge_url?: string | null;  // 新增支援自定義圖片
   earned_at: string;
 };
 
@@ -119,7 +120,8 @@ export default function UserProfilePage() {
             id,
             name,
             description,
-            icon_type
+            icon_type,
+            badge_url
           )
         `)
         .eq("user_id", profileData.id);
@@ -334,12 +336,26 @@ export default function UserProfilePage() {
                     key={achievement.id}
                     className="group relative bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-yellow-500/50 hover:bg-white/10 transition-all cursor-help"
                   >
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-yellow-500/30">
-                      {achievement.icon_type === 'Camera' && <Camera className="w-6 h-6 text-yellow-400 share-icon" />}
-                      {achievement.icon_type === 'Swords' && <Swords className="w-6 h-6 text-yellow-400 share-icon" />}
-                      {achievement.icon_type === 'Star' && <Star className="w-6 h-6 text-yellow-400 share-icon" />}
-                      {achievement.icon_type === 'Trophy' && <Trophy className="w-6 h-6 text-yellow-400 share-icon" />}
-                      {achievement.icon_type === 'Award' && <Award className="w-6 h-6 text-yellow-400 share-icon" />}
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-yellow-500/30 overflow-hidden">
+                      {achievement.badge_url ? (
+                        <div className="relative w-full h-full">
+                          <Image
+                            src={achievement.badge_url}
+                            alt={achievement.name}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          {achievement.icon_type === 'Camera' && <Camera className="w-6 h-6 text-yellow-400 share-icon" />}
+                          {achievement.icon_type === 'Swords' && <Swords className="w-6 h-6 text-yellow-400 share-icon" />}
+                          {achievement.icon_type === 'Star' && <Star className="w-6 h-6 text-yellow-400 share-icon" />}
+                          {achievement.icon_type === 'Trophy' && <Trophy className="w-6 h-6 text-yellow-400 share-icon" />}
+                          {achievement.icon_type === 'Award' && <Award className="w-6 h-6 text-yellow-400 share-icon" />}
+                        </>
+                      )}
                     </div>
                     <div>
                       <div className="text-white font-bold">{achievement.name}</div>

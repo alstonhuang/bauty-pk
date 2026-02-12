@@ -17,13 +17,31 @@ CREATE INDEX IF NOT EXISTS idx_photos_tags ON public.photos USING GIN (tags);
 -- 基礎成就定義
 CREATE TABLE IF NOT EXISTS public.achievements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name TEXT NOT NULL,
+    name TEXT NOT NULL,      
     description TEXT,
-    icon_type TEXT DEFAULT 'Award', -- 預設使用 Lucide 的 Award 圖示
-    criteria_type TEXT NOT NULL,    -- 例如: 'match_count', 'win_count', 'score_threshold'
-    criteria_value INTEGER,         -- 達成條件門檻
+    icon_type TEXT DEFAULT 'Award', 
+    badge_url TEXT,                 -- 新增: 自定義勳章圖片網址
+    criteria_type TEXT NOT NULL,    
+    criteria_value INTEGER,         
     created_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- 關鍵修正：清理重複數據並強制加入唯一約束
+-- 這樣即使表已經存在，也能確保 ON CONFLICT (name) 正常工作
+DO $$
+BEGIN
+    -- 1. 刪除名稱重複的項，保留 ID 較小的一個
+    DELETE FROM public.achievements a
+    USING public.achievements b
+    WHERE a.id > b.id AND a.name = b.name;
+
+    -- 2. 嘗試加入唯一約束
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'achievements_name_key'
+    ) THEN
+        ALTER TABLE public.achievements ADD CONSTRAINT achievements_name_key UNIQUE (name);
+    END IF;
+END $$;
 
 -- 用戶成就關聯表
 CREATE TABLE IF NOT EXISTS public.user_achievements (
@@ -42,7 +60,7 @@ VALUES
 ('人氣之星', '單張照片分數超過 2000 分', 'Star', 'score_threshold', 2000),
 ('連勝王', '個人勝率超過 60%', 'Trophy', 'win_rate_threshold', 60),
 ('貓奴領袖', '在「寵物」標籤獲得 10 次勝利', 'Heart', 'tag_win_count:寵物', 10)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (name) DO NOTHING; -- 根據 name 進行衝突檢查
 
 -- 5. 自動化成就檢查函數 (擴充性核心)
 -- 此函數可由後端 API 或資料庫觸發器呼叫
