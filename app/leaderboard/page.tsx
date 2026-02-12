@@ -58,7 +58,7 @@ export default function LeaderboardPage() {
       // Get total count
       let queryCount = supabase.from("photos").select("*", { count: 'exact', head: true });
       if (selectedCategory !== 'All') {
-        queryCount = queryCount.eq('category', selectedCategory);
+        queryCount = queryCount.contains('tags', [selectedCategory]);
       }
       const { count } = await queryCount;
 
@@ -78,7 +78,7 @@ export default function LeaderboardPage() {
         `);
 
       if (selectedCategory !== 'All') {
-        query = query.eq('category', selectedCategory);
+        query = query.contains('tags', [selectedCategory]);
       }
 
       const { data, error } = await query
