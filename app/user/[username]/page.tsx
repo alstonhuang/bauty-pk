@@ -108,7 +108,9 @@ export default function UserProfilePage() {
 
       // If viewing own profile, trigger achievement check FIRST to ensure new ones are awarded
       if (user && user.id === profileData.id) {
-        await supabase.rpc('check_user_achievements', { p_user_id: user.id });
+        console.log("Triggering achievement check for self...");
+        const { error: rpcError } = await supabase.rpc('check_user_achievements', { p_user_id: user.id });
+        if (rpcError) console.error("RPC check_user_achievements error:", rpcError);
       }
 
       // Fetch achievements (including newly awarded ones)
@@ -137,9 +139,9 @@ export default function UserProfilePage() {
             earned_at: item.earned_at,
             ...achievementBase
           };
-        }).filter(a => a.id); // Ensure we have a valid achievement
+        }).filter(a => a && a.id);
 
-        console.log("Mapped achievements for profile:", mappedAchievements);
+        console.log("Final mapped achievements:", mappedAchievements);
         setAchievements(mappedAchievements);
       } else if (achievementError) {
         console.error("Achievement fetch error:", achievementError);
@@ -334,9 +336,20 @@ export default function UserProfilePage() {
           {/* Achievements */}
           {/* Achievements */}
           <div className="mb-12">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Award className="w-6 h-6 text-yellow-400" />
-              成就勳章
+            <h2 className="text-2xl font-bold mb-6 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <Award className="w-6 h-6 text-yellow-400" />
+                成就勳章
+              </div>
+              {isOwnProfile && (
+                <button
+                  onClick={fetchUserProfile}
+                  className="text-[10px] md:text-xs bg-white/5 hover:bg-white/10 border border-white/10 px-3 py-1.5 rounded-full text-white/40 hover:text-white/80 transition-all flex items-center gap-2 uppercase tracking-widest font-bold"
+                >
+                  <TrendingUp className="w-3 h-3" />
+                  重新檢查成就
+                </button>
+              )}
             </h2>
             {achievements.length > 0 ? (
               <div className="flex flex-wrap gap-4">
