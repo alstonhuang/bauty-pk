@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [uploading, setUploading] = useState(false);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     checkAdminStatus();
@@ -86,7 +87,7 @@ export default function AdminPage() {
       .list();
 
     if (!error && data) {
-      const images = data.map(file => ({
+      const images = data.filter(file => file.name !== '.emptyFolderPlaceholder').map(file => ({
         name: file.name,
         url: supabase.storage.from('achievement_badges').getPublicUrl(file.name).data.publicUrl
       }));
@@ -139,7 +140,21 @@ export default function AdminPage() {
     }
   };
 
+  const startCreate = () => {
+    setIsCreating(true);
+    setEditingId('new');
+    setFormData({
+      name: '',
+      description: '',
+      icon_type: 'Award',
+      badge_url: null,
+      criteria_type: 'upload_count',
+      criteria_value: 1,
+    });
+  };
+
   const startEdit = (achievement: Achievement) => {
+    setIsCreating(false);
     setEditingId(achievement.id);
     setFormData({
       name: achievement.name,
@@ -153,6 +168,7 @@ export default function AdminPage() {
 
   const cancelEdit = () => {
     setEditingId(null);
+    setIsCreating(false);
     setFormData({});
     setShowImagePicker(false);
   };
@@ -160,6 +176,34 @@ export default function AdminPage() {
   const selectBadgeImage = (url: string) => {
     setFormData({ ...formData, badge_url: url });
     setShowImagePicker(false);
+  };
+
+  const createAchievement = async () => {
+    try {
+      const { error } = await supabase
+        .from('achievements')
+        .insert({
+          name: formData.name,
+          description: formData.description,
+          icon_type: formData.icon_type,
+          badge_url: formData.badge_url || null,
+          criteria_type: formData.criteria_type,
+          criteria_value: formData.criteria_value,
+        });
+
+      if (error) throw error;
+
+      setMessage({ type: 'success', text: '成就新增成功！' });
+      setEditingId(null);
+      setIsCreating(false);
+      setFormData({});
+      await fetchAchievements();
+
+      setTimeout(() => setMessage(null), 3000);
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message || '新增失敗' });
+      setTimeout(() => setMessage(null), 3000);
+    }
   };
 
   const saveEdit = async (id: string) => {
@@ -201,6 +245,147 @@ export default function AdminPage() {
   if (!isAdmin) {
     return null;
   }
+
+  const renderEditForm = (id: string) => (
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-bold text-white/60 mb-2">成就名稱</label>
+          <input
+            type="text"
+            value={formData.name || ''}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-white/60 mb-2">圖示類型 (Lucide Icon)</label>
+          <input
+            type="text"
+            value={formData.icon_type || ''}
+            onChange={(e) => setFormData({ ...formData, icon_type: e.target.value })}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
+            placeholder="例如: Award, Trophy, Star"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-white/60 mb-2">描述</label>
+        <input
+          type="text"
+          value={formData.description || ''}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
+        />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-bold text-white/60 mb-2">達成條件類型</label>
+          <select
+            value={formData.criteria_type || ''}
+            onChange={(e) => setFormData({ ...formData, criteria_type: e.target.value })}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
+          >
+            <option value="upload_count">上傳照片數量</option>
+            <option value="match_count">參與對決次數</option>
+            <option value="score_threshold">單張照片分數門檻</option>
+            <option value="win_rate_threshold">勝率門檻 (%)</option>
+            <option value="tag_win_count:寵物">寵物標籤勝利次數</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-bold text-white/60 mb-2">達成門檻值</label>
+          <input
+            type="number"
+            value={formData.criteria_value || 0}
+            onChange={(e) => setFormData({ ...formData, criteria_value: parseInt(e.target.value) })}
+            className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-bold text-white/60 mb-2">自定義徽章圖片</label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={formData.badge_url || ''}
+            readOnly
+            className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white/60 focus:border-pink-500 focus:outline-none"
+            placeholder={badgeImages.length > 0 ? "點擊右側按鈕從圖片庫選擇" : "請先上傳圖片到圖片庫"}
+          />
+          <button
+            onClick={() => setShowImagePicker(!showImagePicker)}
+            disabled={badgeImages.length === 0}
+            className={`px-4 py-2 rounded-lg font-bold transition ${badgeImages.length === 0
+                ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                : 'bg-white/10 hover:bg-white/20'
+              }`}
+          >
+            {showImagePicker ? '關閉' : '選擇圖片'}
+          </button>
+        </div>
+
+        {showImagePicker && badgeImages.length > 0 && (
+          <div className="mt-4 grid grid-cols-4 gap-2 p-4 bg-white/5 rounded-lg max-h-64 overflow-y-auto border border-pink-500/30">
+            {badgeImages.map((img) => (
+              <button
+                key={img.name}
+                onClick={() => selectBadgeImage(img.url)}
+                className={`aspect-square bg-white/10 rounded-lg overflow-hidden border-2 transition ${formData.badge_url === img.url
+                    ? 'border-pink-500 ring-2 ring-pink-500/50'
+                    : 'border-transparent hover:border-pink-500/50'
+                  }`}
+              >
+                <Image
+                  src={img.url}
+                  alt={img.name}
+                  width={100}
+                  height={100}
+                  className="object-contain p-2"
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {formData.badge_url && (
+          <div className="mt-2 flex items-center gap-2">
+            <div className="w-12 h-12 bg-white/10 rounded-lg overflow-hidden border border-pink-500/30">
+              <Image
+                src={formData.badge_url}
+                alt="預覽"
+                width={48}
+                height={48}
+                className="object-contain p-1"
+              />
+            </div>
+            <span className="text-xs text-white/60">目前選擇的圖片</span>
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <button
+          onClick={() => isCreating ? createAchievement() : saveEdit(id)}
+          className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg font-bold hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition"
+        >
+          <Save className="w-4 h-4" />
+          {isCreating ? '新增' : '儲存'}
+        </button>
+        <button
+          onClick={cancelEdit}
+          className="px-6 py-2 bg-white/10 rounded-lg font-bold hover:bg-white/20 transition"
+        >
+          取消
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#050505] text-white p-6">
@@ -263,171 +448,69 @@ export default function AdminPage() {
             </label>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {badgeImages.map((img) => (
-              <div key={img.name} className="relative group">
-                <div className="aspect-square bg-white/10 rounded-lg overflow-hidden border border-white/20 hover:border-pink-500/50 transition">
-                  <Image
-                    src={img.url}
-                    alt={img.name}
-                    fill
-                    className="object-contain p-2"
-                  />
+          {badgeImages.length === 0 ? (
+            <div className="text-center py-12 text-white/40">
+              <ImageIcon className="w-12 h-12 mx-auto mb-4 opacity-30" />
+              <p>尚無圖片，請先上傳徽章圖片</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {badgeImages.map((img) => (
+                <div key={img.name} className="relative group">
+                  <div className="aspect-square bg-white/10 rounded-lg overflow-hidden border border-white/20 hover:border-pink-500/50 transition">
+                    <Image
+                      src={img.url}
+                      alt={img.name}
+                      fill
+                      className="object-contain p-2"
+                    />
+                  </div>
+                  <button
+                    onClick={() => deleteImage(img.name)}
+                    className="absolute top-2 right-2 p-1.5 bg-red-500/80 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                  <p className="text-xs text-white/40 mt-1 truncate">{img.name}</p>
                 </div>
-                <button
-                  onClick={() => deleteImage(img.name)}
-                  className="absolute top-2 right-2 p-1.5 bg-red-500/80 rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-600"
-                >
-                  <Trash2 className="w-3 h-3" />
-                </button>
-                <p className="text-xs text-white/40 mt-1 truncate">{img.name}</p>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Achievements List */}
         <div className="grid gap-4">
-          <h2 className="text-2xl font-bold">成就列表</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">成就列表</h2>
+            <button
+              onClick={startCreate}
+              disabled={editingId !== null}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition ${editingId !== null
+                  ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-[0_0_20px_rgba(34,197,94,0.4)]'
+                }`}
+            >
+              <Plus className="w-4 h-4" />
+              新增成就
+            </button>
+          </div>
+
+          {/* New Achievement Form */}
+          {isCreating && editingId === 'new' && (
+            <div className="bg-white/5 backdrop-blur-xl border border-green-500/30 rounded-2xl p-6">
+              <h3 className="text-lg font-bold mb-4 text-green-400">新增成就</h3>
+              {renderEditForm('new')}
+            </div>
+          )}
+
+          {/* Existing Achievements */}
           {achievements.map((achievement) => (
             <div
               key={achievement.id}
               className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-pink-500/30 transition"
             >
               {editingId === achievement.id ? (
-                // Edit Mode
-                <div className="space-y-4">
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">成就名稱</label>
-                      <input
-                        type="text"
-                        value={formData.name || ''}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">圖示類型 (Lucide Icon)</label>
-                      <input
-                        type="text"
-                        value={formData.icon_type || ''}
-                        onChange={(e) => setFormData({ ...formData, icon_type: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
-                        placeholder="例如: Award, Trophy, Star"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-white/60 mb-2">描述</label>
-                    <input
-                      type="text"
-                      value={formData.description || ''}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">達成條件類型</label>
-                      <select
-                        value={formData.criteria_type || ''}
-                        onChange={(e) => setFormData({ ...formData, criteria_type: e.target.value })}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
-                      >
-                        <option value="upload_count">上傳照片數量</option>
-                        <option value="match_count">參與對決次數</option>
-                        <option value="score_threshold">單張照片分數門檻</option>
-                        <option value="win_rate_threshold">勝率門檻 (%)</option>
-                        <option value="tag_win_count:寵物">寵物標籤勝利次數</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-bold text-white/60 mb-2">達成門檻值</label>
-                      <input
-                        type="number"
-                        value={formData.criteria_value || 0}
-                        onChange={(e) => setFormData({ ...formData, criteria_value: parseInt(e.target.value) })}
-                        className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-bold text-white/60 mb-2">自定義徽章圖片</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={formData.badge_url || ''}
-                        onChange={(e) => setFormData({ ...formData, badge_url: e.target.value })}
-                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white focus:border-pink-500 focus:outline-none"
-                        placeholder="或從圖片庫選擇"
-                        readOnly
-                      />
-                      <button
-                        onClick={() => setShowImagePicker(!showImagePicker)}
-                        className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-bold transition"
-                      >
-                        選擇圖片
-                      </button>
-                    </div>
-
-                    {showImagePicker && (
-                      <div className="mt-4 grid grid-cols-4 gap-2 p-4 bg-white/5 rounded-lg max-h-64 overflow-y-auto">
-                        {badgeImages.map((img) => (
-                          <button
-                            key={img.name}
-                            onClick={() => selectBadgeImage(img.url)}
-                            className="aspect-square bg-white/10 rounded-lg overflow-hidden border-2 border-transparent hover:border-pink-500 transition"
-                          >
-                            <Image
-                              src={img.url}
-                              alt={img.name}
-                              width={100}
-                              height={100}
-                              className="object-contain p-2"
-                            />
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {formData.badge_url && (
-                      <div className="mt-2 flex items-center gap-2">
-                        <div className="w-12 h-12 bg-white/10 rounded-lg overflow-hidden">
-                          <Image
-                            src={formData.badge_url}
-                            alt="預覽"
-                            width={48}
-                            height={48}
-                            className="object-contain p-1"
-                          />
-                        </div>
-                        <span className="text-xs text-white/60">目前選擇的圖片</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-3 pt-2">
-                    <button
-                      onClick={() => saveEdit(achievement.id)}
-                      className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg font-bold hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition"
-                    >
-                      <Save className="w-4 h-4" />
-                      儲存
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      className="px-6 py-2 bg-white/10 rounded-lg font-bold hover:bg-white/20 transition"
-                    >
-                      取消
-                    </button>
-                  </div>
-                </div>
+                renderEditForm(achievement.id)
               ) : (
                 // View Mode
                 <div className="flex items-start justify-between gap-4">
@@ -463,7 +546,11 @@ export default function AdminPage() {
                   </div>
                   <button
                     onClick={() => startEdit(achievement)}
-                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg font-bold transition flex-shrink-0"
+                    disabled={editingId !== null}
+                    className={`px-4 py-2 rounded-lg font-bold transition flex-shrink-0 ${editingId !== null
+                        ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                        : 'bg-white/10 hover:bg-white/20'
+                      }`}
                   >
                     編輯
                   </button>
