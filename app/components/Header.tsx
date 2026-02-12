@@ -109,7 +109,7 @@ export default function Header() {
                   }`}
               >
                 <span>⚔️</span>
-                <span className="hidden sm:inline">PK</span>
+                <span className="hidden sm:inline">對決PK</span>
                 {isActive("/pk") && (
                   <motion.div layoutId="nav-pill" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-primary rounded-full" />
                 )}
@@ -122,7 +122,7 @@ export default function Header() {
                   }`}
               >
                 <span>🏆</span>
-                <span className="hidden sm:inline">Leaderboard</span>
+                <span className="hidden sm:inline">名人堂</span>
                 {isActive("/leaderboard") && (
                   <motion.div layoutId="nav-pill" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-yellow-400 rounded-full" />
                 )}
@@ -135,7 +135,7 @@ export default function Header() {
                   }`}
               >
                 <span>📸</span>
-                <span className="hidden sm:inline">Upload</span>
+                <span className="hidden sm:inline">上傳相片</span>
                 {isActive("/upload") && (
                   <motion.div layoutId="nav-pill" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-blue-400 rounded-full" />
                 )}
@@ -148,7 +148,7 @@ export default function Header() {
                   }`}
               >
                 <span>🖼️</span>
-                <span className="hidden sm:inline">My Photos</span>
+                <span className="hidden sm:inline">我的相簿</span>
                 {isActive("/my-photos") && (
                   <motion.div layoutId="nav-pill" className="absolute -bottom-1 left-0 right-0 h-0.5 bg-purple-400 rounded-full" />
                 )}

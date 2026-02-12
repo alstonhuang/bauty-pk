@@ -83,7 +83,7 @@ export default function UserProfilePage() {
       // Fetch user's photos
       const { data: photosData, error: photosError } = await supabase
         .from("photos")
-        .select("id, url, score, wins, matches")
+        .select("id, url, score, wins, matches, tags")
         .eq("user_id", profileData.id)
         .order("score", { ascending: false });
 
@@ -332,12 +332,13 @@ export default function UserProfilePage() {
           )}
 
           {/* Achievements */}
-          {achievements.length > 0 && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <Award className="w-6 h-6 text-yellow-400" />
-                成就勳章
-              </h2>
+          {/* Achievements */}
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <Award className="w-6 h-6 text-yellow-400" />
+              成就勳章
+            </h2>
+            {achievements.length > 0 ? (
               <div className="flex flex-wrap gap-4">
                 {achievements.map((achievement) => (
                   <div
@@ -378,8 +379,14 @@ export default function UserProfilePage() {
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="bg-white/5 rounded-3xl p-10 border border-white/5 flex flex-col items-center justify-center text-center backdrop-blur-sm grayscale opacity-60">
+                <Trophy className="w-12 h-12 text-white/20 mb-4" />
+                <p className="text-white/40 font-bold">目前尚未獲得任何成就</p>
+                <p className="text-xs text-white/20 mt-2">快去對決 PK 或標記照片來贏得勳章吧！</p>
+              </div>
+            )}
+          </div>
 
           {/* Gallery */}
           <div>
