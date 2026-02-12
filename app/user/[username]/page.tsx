@@ -113,38 +113,42 @@ export default function UserProfilePage() {
         if (rpcError) console.error("RPC check_user_achievements error:", rpcError);
       }
 
-      // Fetch achievements (including newly awarded ones)
-      const { data: achievementData, error: achievementError } = await supabase
+      // Fetch achievements (Split into two queries to avoid RLS join issues)
+      const { data: uaData, error: uaError } = await supabase
         .from("user_achievements")
-        .select(`
-          earned_at,
-          achievements (
-            id,
-            name,
-            description,
-            icon_type,
-            badge_url
-          )
-        `)
+        .select("achievement_id, earned_at")
         .eq("user_id", profileData.id);
 
-      if (!achievementError && achievementData) {
-        const mappedAchievements = achievementData.map((item: any) => {
-          // Handle both object and array return from Supabase relations
-          const achievementBase = Array.isArray(item.achievements)
-            ? item.achievements[0]
-            : item.achievements;
+      if (uaError) {
+        console.error("User achievements fetch error:", uaError);
+      }
 
-          return {
-            earned_at: item.earned_at,
-            ...achievementBase
-          };
-        }).filter(a => a && a.id);
+      if (uaData && uaData.length > 0) {
+        const achievementIds = uaData.map(ua => ua.achievement_id);
+        const { data: achDefs, error: achDefError } = await supabase
+          .from("achievements")
+          .select("*")
+          .in("id", achievementIds);
 
-        console.log("Final mapped achievements:", mappedAchievements);
-        setAchievements(mappedAchievements);
-      } else if (achievementError) {
-        console.error("Achievement fetch error:", achievementError);
+        if (achDefError) {
+          console.error("Achievement definitions fetch error:", achDefError);
+        }
+
+        if (achDefs) {
+          const mappedAchievements = uaData.map((ua: any) => {
+            const definition = achDefs.find(a => a.id === ua.achievement_id);
+            return {
+              earned_at: ua.earned_at,
+              ...definition
+            };
+          }).filter(a => a && a.id);
+
+          console.log("Final mapped achievements (split fetch):", mappedAchievements);
+          setAchievements(mappedAchievements);
+        }
+      } else {
+        console.log("No user achievements found in DB for this user.");
+        setAchievements([]);
       }
 
     } catch (err) {
