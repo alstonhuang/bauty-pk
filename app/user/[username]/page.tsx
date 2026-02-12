@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
-import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft, Image as ImageIcon } from "lucide-react";
+import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft, Image as ImageIcon, Share2, Award, Star, Swords } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -26,6 +26,14 @@ type UserPhoto = {
   matches: number;
 };
 
+type Achievement = {
+  id: string;
+  name: string;
+  description: string;
+  icon_type: string;
+  earned_at: string;
+};
+
 type UserStats = {
   totalPhotos: number;
   totalScore: number;
@@ -42,6 +50,7 @@ export default function UserProfilePage() {
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [photos, setPhotos] = useState<UserPhoto[]>([]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
@@ -95,6 +104,37 @@ export default function UserProfilePage() {
           avgScore: Math.round(totalScore / photosData.length),
         });
       }
+
+      // If viewing own profile, trigger achievement check FIRST to ensure new ones are awarded
+      if (user && user.id === profileData.id) {
+        await supabase.rpc('check_user_achievements', { p_user_id: user.id });
+      }
+
+      // Fetch achievements (including newly awarded ones)
+      const { data: achievementData, error: achievementError } = await supabase
+        .from("user_achievements")
+        .select(`
+          earned_at,
+          achievements (
+            id,
+            name,
+            description,
+            icon_type
+          )
+        `)
+        .eq("user_id", profileData.id);
+
+      if (!achievementError && achievementData) {
+        const mappedAchievements = achievementData.map((item: any) => ({
+          earned_at: item.earned_at,
+          ...item.achievements
+        }));
+        console.log("Fetched achievements for profile:", mappedAchievements);
+        setAchievements(mappedAchievements);
+      } else if (achievementError) {
+        console.error("Achievement fetch error:", achievementError);
+      }
+
     } catch (err) {
       console.error("Error fetching profile:", err);
       router.push("/");
@@ -106,7 +146,10 @@ export default function UserProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-white/60">Loading profile...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-white/60 font-medium tracking-widest text-sm uppercase">載入檔案中...</div>
+        </div>
       </div>
     );
   }
@@ -115,9 +158,9 @@ export default function UserProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">User not found</h1>
+          <h1 className="text-2xl font-bold mb-4">找不到該用戶</h1>
           <Link href="/" className="text-pink-400 hover:underline">
-            Go back home
+            返回首頁
           </Link>
         </div>
       </div>
@@ -198,7 +241,7 @@ export default function UserProfilePage() {
                     className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
                   >
                     <Edit className="w-4 h-4" />
-                    <span className="hidden sm:inline">Edit Profile</span>
+                    <span className="hidden sm:inline">編輯個人檔案</span>
                   </Link>
                 )}
               </div>
@@ -210,9 +253,32 @@ export default function UserProfilePage() {
               <div className="flex items-center gap-4 mt-4 text-sm text-white/60">
                 <div className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4" />
-                  <span>Joined {joinDate}</span>
+                  <span>於 {new Date(profile.created_at).toLocaleDateString('zh-TW', { year: 'numeric', month: 'long' })} 加入</span>
                 </div>
               </div>
+            </div>
+
+            {/* Share Button */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={() => {
+                  const shareText = `來看看 ${profile.display_name} 在 Beauty-PK 的戰績吧！總分：${stats?.totalScore}，排名不斷上升中！`;
+                  if (navigator.share) {
+                    navigator.share({
+                      title: 'Beauty-PK 個人檔案',
+                      text: shareText,
+                      url: window.location.href
+                    });
+                  } else {
+                    navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+                    alert('已複製分享連結至剪貼簿！');
+                  }
+                }}
+                className="p-3 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white rounded-xl border border-white/10 transition-all flex items-center gap-2"
+              >
+                <Share2 className="w-5 h-5" />
+                <span className="text-sm font-bold">分享戰績</span>
+              </button>
             </div>
           </div>
 
@@ -222,7 +288,7 @@ export default function UserProfilePage() {
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div className="flex items-center gap-2 mb-2">
                   <Camera className="w-4 h-4 text-blue-400" />
-                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">Photos</span>
+                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">照片數量</span>
                 </div>
                 <div className="text-3xl font-bold font-mono tabular-nums">{stats.totalPhotos}</div>
               </div>
@@ -230,7 +296,7 @@ export default function UserProfilePage() {
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div className="flex items-center gap-2 mb-2">
                   <Trophy className="w-4 h-4 text-yellow-400" />
-                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">Total Score</span>
+                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">總積分</span>
                 </div>
                 <div className="text-3xl font-bold text-yellow-400 font-mono tabular-nums">{stats.totalScore.toLocaleString()}</div>
               </div>
@@ -238,7 +304,7 @@ export default function UserProfilePage() {
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div className="flex items-center gap-2 mb-2">
                   <TrendingUp className="w-4 h-4 text-green-400" />
-                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">Win Rate</span>
+                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">勝率</span>
                 </div>
                 <div className={`text-3xl font-bold font-mono tabular-nums ${stats.winRate >= 50 ? 'text-green-400' : 'text-white/60'}`}>
                   {stats.winRate}%
@@ -248,9 +314,45 @@ export default function UserProfilePage() {
               <div className="bg-white/5 rounded-lg p-4 border border-white/10">
                 <div className="flex items-center gap-2 mb-2">
                   <Target className="w-4 h-4 text-purple-400" />
-                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">Avg Score</span>
+                  <span className="text-xs text-white/40 uppercase tracking-wider font-semibold">平均分</span>
                 </div>
                 <div className="text-3xl font-bold text-purple-400 font-mono tabular-nums">{stats.avgScore}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Achievements */}
+          {achievements.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <Award className="w-6 h-6 text-yellow-400" />
+                成就勳章
+              </h2>
+              <div className="flex flex-wrap gap-4">
+                {achievements.map((achievement) => (
+                  <div
+                    key={achievement.id}
+                    className="group relative bg-white/5 p-4 rounded-2xl border border-white/10 flex items-center gap-4 hover:border-yellow-500/50 hover:bg-white/10 transition-all cursor-help"
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-xl flex items-center justify-center border border-yellow-500/30">
+                      {achievement.icon_type === 'Camera' && <Camera className="w-6 h-6 text-yellow-400 share-icon" />}
+                      {achievement.icon_type === 'Swords' && <Swords className="w-6 h-6 text-yellow-400 share-icon" />}
+                      {achievement.icon_type === 'Star' && <Star className="w-6 h-6 text-yellow-400 share-icon" />}
+                      {achievement.icon_type === 'Trophy' && <Trophy className="w-6 h-6 text-yellow-400 share-icon" />}
+                      {achievement.icon_type === 'Award' && <Award className="w-6 h-6 text-yellow-400 share-icon" />}
+                    </div>
+                    <div>
+                      <div className="text-white font-bold">{achievement.name}</div>
+                      <div className="text-white/40 text-xs">{new Date(achievement.earned_at).toLocaleDateString()} 達成</div>
+                    </div>
+
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 px-3 py-2 bg-black/90 backdrop-blur-md text-white text-xs rounded-lg border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50">
+                      {achievement.description}
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-black/90" />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -258,17 +360,17 @@ export default function UserProfilePage() {
           {/* Gallery */}
           <div>
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Camera className="w-6 h-6 text-pink-400" />
-              Gallery
+              <ImageIcon className="w-6 h-6 text-pink-400" />
+              作品展示
             </h2>
 
             {photos.length === 0 ? (
               <div className="text-center py-12 bg-white/5 rounded-lg border border-dashed border-white/10">
                 <Camera className="w-12 h-12 mx-auto mb-4 text-white/20" />
-                <p className="text-white/60">No photos uploaded yet</p>
+                <p className="text-white/60">目前尚無上傳照片</p>
                 {isOwnProfile && (
                   <Link href="/upload" className="text-pink-400 hover:underline mt-2 inline-block">
-                    Upload your first photo
+                    上傳您的第一張照片
                   </Link>
                 )}
               </div>
@@ -291,9 +393,18 @@ export default function UserProfilePage() {
                     </div>
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="absolute bottom-2 left-2 right-2">
-                        <div className="text-yellow-400 font-bold font-mono tabular-nums">{photo.score}</div>
+                        <div className="text-yellow-400 font-bold font-mono tabular-nums">{photo.score} 分</div>
+                        <div className="text-[10px] text-yellow-400/60 font-bold uppercase tracking-tighter mb-1">全站評分</div>
                         <div className="text-xs text-white/60">
-                          {photo.wins}W / {photo.matches}M
+                          {photo.wins} 勝 / {photo.matches} 對決
+                        </div>
+                        {/* Tags on Card */}
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {(photo as any).tags?.slice(0, 2).map((tag: string) => (
+                            <span key={tag} className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-white/60 border border-white/5">
+                              #{tag}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>

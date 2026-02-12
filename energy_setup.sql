@@ -65,7 +65,7 @@ BEGIN
             END
         WHERE id = v_user_id;
         
-        RETURN json_build_object('success', true, 'energy', v_current_energy);
+        RETURN json_build_object('success', true, 'energy', v_current_energy, 'max_energy', v_max_energy);
     ELSE
         -- Update regeneration even if we fail to consume, so the user sees proper current value
         IF v_points_to_add > 0 THEN
@@ -75,7 +75,7 @@ BEGIN
              WHERE id = v_user_id;
         END IF;
         
-        RETURN json_build_object('success', false, 'energy', v_current_energy);
+        RETURN json_build_object('success', false, 'energy', v_current_energy, 'max_energy', v_max_energy);
     END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

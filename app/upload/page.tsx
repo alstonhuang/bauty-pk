@@ -12,8 +12,20 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false)
   const [message, setMessage] = useState('')
   const [user, setUser] = useState<User | null>(null)
-  const [category, setCategory] = useState('General')
+  const [tags, setTags] = useState<string[]>(['綜合'])
   const router = useRouter()
+
+  const AVAILABLE_TAGS = ['綜合', '動漫', '寫實', '寵物', '風景', '可愛', '帥氣', '藝術', '人物']
+
+  const toggleTag = (tag: string) => {
+    if (tags.includes(tag)) {
+      if (tags.length > 1) {
+        setTags(tags.filter(t => t !== tag))
+      }
+    } else {
+      setTags([...tags, tag])
+    }
+  }
 
   useEffect(() => {
     const checkUser = async () => {
@@ -137,7 +149,8 @@ export default function UploadPage() {
             user_id: user.id,
             url: publicUrl,
             score: 1000, // Default score
-            category: category
+            category: tags[0], // 舊版本相容性
+            tags: tags // 新版本標籤系統
           }
         ])
 
@@ -169,12 +182,12 @@ export default function UploadPage() {
   return (
     <div className="container min-h-screen flex flex-col items-center justify-center py-20 relative">
       <Link href="/" className="absolute top-8 left-8 text-white/50 hover:text-white transition">
-        &larr; Back to Home
+        &larr; 返回首頁
       </Link>
 
       <div className="glass-panel p-8 w-full max-w-md flex flex-col items-center gap-6 animate-in fade-in zoom-in duration-500">
         <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 to-purple-500">
-          Upload Photo
+          上傳完美瞬間
         </h1>
 
         <div className="w-full relative group">
@@ -202,8 +215,8 @@ export default function UploadPage() {
               <>
                 <div className="text-6xl text-white/20 group-hover:text-pink-500/80 transition-colors">📸</div>
                 <div className="text-center">
-                  <p className="text-lg font-medium text-white/80">Select an Image</p>
-                  <p className="text-sm text-white/40 mt-1">Click or Drag & Drop</p>
+                  <p className="text-lg font-medium text-white/80">點擊或拖放照片</p>
+                  <p className="text-sm text-white/40 mt-1">支援 JPG, PNG, WebP</p>
                 </div>
               </>
             )}
@@ -220,26 +233,25 @@ export default function UploadPage() {
           </div>
         </div>
 
-        {/* Category Selection */}
-        <div className="w-full space-y-2">
-          <label className="text-sm font-medium text-white/60 ml-1">Select Category</label>
-          <div className="grid grid-cols-2 gap-2">
-            {['General', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+        {/* 多重標籤選取 */}
+        <div className="w-full space-y-3">
+          <div className="flex justify-between items-center px-1">
+            <label className="text-sm font-bold text-white/70">選取標籤 (多選)</label>
+            <span className="text-[10px] text-white/30 uppercase tracking-widest font-black">Tags System</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {AVAILABLE_TAGS.map((tag) => (
               <button
-                key={cat}
-                onClick={() => setCategory(cat)}
+                key={tag}
+                onClick={() => toggleTag(tag)}
                 className={`
-                  py-2 px-3 rounded-lg text-sm font-medium transition-all
-                  ${category === cat
-                    ? 'bg-pink-500 text-white shadow-[0_0_15px_rgba(236,72,153,0.4)]'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white border border-white/5'}
+                  py-1.5 px-3 rounded-full text-xs font-bold transition-all border
+                  ${tags.includes(tag)
+                    ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white border-transparent shadow-[0_0_15px_rgba(236,72,153,0.3)]'
+                    : 'bg-white/5 text-white/40 border-white/10 hover:border-white/30 hover:text-white'}
                 `}
               >
-                {cat === 'General' && '🌐 General'}
-                {cat === 'Anime' && '🎨 Anime'}
-                {cat === 'Realistic' && '📸 Realistic'}
-                {cat === 'Pets' && '🐱 Pets'}
-                {cat === 'Landscape' && '🏔️ Landscape'}
+                {tag}
               </button>
             ))}
           </div>
@@ -250,11 +262,11 @@ export default function UploadPage() {
           disabled={!file || uploading}
           className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2"
         >
-          {uploading ? 'Processing...' : 'Upload Now'}
+          {uploading ? '處理中...' : '立即上傳'}
         </button>
 
         {message && (
-          <div className={`p-3 rounded-lg text-sm text-center w-full ${message.includes('Error') ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
+          <div className={`p-3 rounded-lg text-sm text-center w-full ${message.includes('Error') || message.includes('錯誤') ? 'bg-red-500/20 text-red-300' : 'bg-green-500/20 text-green-300'}`}>
             {message}
           </div>
         )}
@@ -262,15 +274,15 @@ export default function UploadPage() {
         {!user && (
           <div className="flex flex-col gap-4 w-full items-center text-center mt-6 p-6 bg-white/5 rounded-xl border border-white/10">
             <div className="text-4xl">🔒</div>
-            <h3 className="text-xl font-bold text-white">Authentication Required</h3>
+            <h3 className="text-xl font-bold text-white">需要身分驗證</h3>
             <p className="text-white/60 mb-2">
-              You must be logged in to upload photos to the platform.
+              您必須先登入才能將照片上傳至平台。
             </p>
             <Link
               href="/login"
               className="btn-primary w-full py-3 flex items-center justify-center gap-2"
             >
-              <span>Login / Sign Up</span>
+              <span>立即登入 / 註冊</span>
               <span>&rarr;</span>
             </Link>
           </div>

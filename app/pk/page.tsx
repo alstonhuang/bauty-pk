@@ -26,17 +26,27 @@ export default function PKPage() {
   const [voteResult, setVoteResult] = useState<{ winnerId: string; gained: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState({ a: false, b: false });
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  const fetchMatch = async (excludeIds: string[] = [], category = selectedCategory) => {
+  const AVAILABLE_TAGS = ['動漫', '寫實', '寵物', '風景', '可愛', '帥氣', '藝術', '人物'];
+
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  const fetchMatch = async (excludeIds: string[] = [], tags = selectedTags) => {
     try {
       setLoading(true);
-      setImagesLoaded({ a: false, b: false }); // Hide images during transition
+      setImagesLoaded({ a: false, b: false });
 
       const params = new URLSearchParams({
         t: Date.now().toString(),
         exclude: excludeIds.join(','),
-        category: category
+        tags: tags.join(',')
       });
       const res = await fetch(`/api/match/random?${params.toString()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to fetch match');
@@ -53,7 +63,7 @@ export default function PKPage() {
 
   useEffect(() => {
     fetchMatch();
-  }, []);
+  }, [selectedTags]);
 
   // Clear error after 3 seconds
   useEffect(() => {
@@ -78,7 +88,7 @@ export default function PKPage() {
       if (user) {
         const { data: energyData, error: energyError } = await (supabase as any).rpc('consume_energy', { cost: 1 });
         if (energyError || !(energyData as any).success) {
-          setError(energyError ? 'Energy Error: ' + energyError.message : '⚡ Not enough energy!');
+          setError(energyError ? '資料庫錯誤: ' + energyError.message : '⚡ 體力不足！');
           setVotingState('idle');
           setVoteResult(null);
           return;
@@ -86,7 +96,7 @@ export default function PKPage() {
       } else {
         const anonEnergy = parseInt(localStorage.getItem('anon_energy') ?? '5');
         if (anonEnergy <= 0) {
-          setError('🎁 Trial Ended! Sign up for 10 Energy.');
+          setError('🎁 試用次數已達上限！登入即可獲得 10 體力。');
           setVotingState('idle');
           setVoteResult(null);
           return;
@@ -140,11 +150,11 @@ export default function PKPage() {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-[#050505] text-white">
         <AlertCircle className="w-12 h-12 mb-4 text-white/20" />
-        <p className="mb-6 text-xl font-light">No competitors found.</p>
+        <p className="mb-6 text-xl font-light">目前沒有合適的參賽者。</p>
         <Link href="/upload" className="px-6 py-3 bg-pink-500 hover:bg-pink-600 rounded-lg font-bold transition">
-          Upload Photos First
+          立即上傳照片
         </Link>
-        <Link href="/" className="mt-4 text-sm text-white/40 hover:text-white">Return to Home</Link>
+        <Link href="/" className="mt-4 text-sm text-white/40 hover:text-white">返回首頁</Link>
       </div>
     );
   }
@@ -162,30 +172,36 @@ export default function PKPage() {
         <span className="font-black italic text-4xl md:text-7xl bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">VS</span>
       </div>
 
-      {/* Top Controls - Category Selector */}
+      {/* Top Controls - Tag Selector */}
       <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3 w-[90%] md:w-auto">
         <div className="flex flex-wrap items-center justify-center gap-1.5 p-1 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
-          {['All', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+          <button
+            onClick={() => setSelectedTags([])}
+            className={`
+              px-4 py-2 rounded-xl text-[10px] md:text-xs font-black tracking-[0.1em] transition-all
+              ${selectedTags.length === 0
+                ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]'
+                : 'text-white/30 hover:text-white hover:bg-white/5'}
+            `}
+          >
+            綜合
+          </button>
+          {AVAILABLE_TAGS.map((tag) => (
             <button
-              key={cat}
-              onClick={() => {
-                if (selectedCategory !== cat) {
-                  setSelectedCategory(cat);
-                  fetchMatch([], cat);
-                }
-              }}
+              key={tag}
+              onClick={() => toggleTag(tag)}
               className={`
                 px-4 py-2 rounded-xl text-[10px] md:text-xs font-black tracking-[0.1em] transition-all
-                ${selectedCategory === cat
+                ${selectedTags.includes(tag)
                   ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-[0_0_20px_rgba(236,72,153,0.4)]'
                   : 'text-white/30 hover:text-white hover:bg-white/5'}
               `}
             >
-              {cat.toUpperCase()}
+              {tag}
             </button>
           ))}
         </div>
-        <div className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase">Arena Mode</div>
+        <div className="text-[10px] font-black text-white/20 tracking-[0.4em] uppercase">競技場模式 (支援多選)</div>
       </div>
 
       {/* Custom Toast Notification */}
@@ -397,7 +413,7 @@ function ContestantSide({ photo, opponentId, side, onVote, votingState, result, 
                       className="bg-black/80 backdrop-blur-xl px-8 py-3 rounded-full border-2 border-yellow-400 shadow-[0_0_50px_rgba(234,179,8,0.5)] flex items-center gap-3"
                     >
                       <span className="text-yellow-400 font-black text-3xl md:text-5xl italic tracking-tighter drop-shadow-lg">
-                        WINNER
+                        優勝者
                       </span>
                       <motion.span
                         initial={{ opacity: 0, x: -10 }}

@@ -13,7 +13,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [energy, setEnergy] = useState<number | null>(null);
+  const [energy, setEnergy] = useState<{ current: number; max: number } | null>(null);
   const [profile, setProfile] = useState<{ username: string; display_name: string; avatar_url: string | null } | null>(null);
 
   const fetchProfile = async (userId: string) => {
@@ -31,7 +31,10 @@ export default function Header() {
       // Call RPC to sync and get energy
       const { data, error } = await supabase.rpc('get_synced_energy');
       if (data) {
-        setEnergy((data as any).energy);
+        setEnergy({
+          current: (data as any).energy,
+          max: (data as any).max_energy || 10
+        });
       }
     }
   };
@@ -159,16 +162,16 @@ export default function Header() {
                   <>
                     {/* Energy Display */}
                     <div className="hidden md:flex flex-col items-end mr-2">
-                      <div className={`flex items-center gap-1 text-xs font-bold ${energy && energy > 10 ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
+                      <div className={`flex items-center gap-1 text-xs font-bold ${energy && energy.current > energy.max ? "text-yellow-400 animate-pulse" : "text-pink-400"}`}>
                         <span>⚡</span>
-                        <span>{energy !== null ? energy : '--'} / 10</span>
-                        {energy && energy > 10 && <span className="text-[10px] ml-1">(OVERFLOW)</span>}
+                        <span>{energy !== null ? `${energy.current} / ${energy.max}` : '-- / --'}</span>
+                        {energy && energy.current > energy.max && <span className="text-[10px] ml-1">(OVERFLOW)</span>}
                       </div>
                       <div className="w-24 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${Math.min(100, ((energy || 0) / 10) * 100)}%` }}
-                          className={`h-full ${energy && energy > 10 ? "bg-gradient-to-r from-yellow-400 to-orange-500" : "bg-gradient-to-r from-pink-500 to-purple-500"} transition-all duration-500 ease-out`}
+                          animate={{ width: `${Math.min(100, ((energy?.current || 0) / (energy?.max || 10)) * 100)}%` }}
+                          className={`h-full ${energy && energy.current > energy.max ? "bg-gradient-to-r from-yellow-400 to-orange-500" : "bg-gradient-to-r from-pink-500 to-purple-500"} transition-all duration-500 ease-out`}
                         />
                       </div>
                     </div>

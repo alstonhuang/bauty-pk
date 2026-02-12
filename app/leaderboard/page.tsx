@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, Variants, AnimatePresence } from "framer-motion";
-import { Trophy, Medal, Crown } from "lucide-react";
+import { Trophy, Medal, Crown, ArrowLeft, Share2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -140,7 +140,7 @@ export default function LeaderboardPage() {
         <div className="absolute -top-2 -right-2 w-5 h-5 md:w-6 md:h-6 bg-orange-400 text-black font-black flex items-center justify-center rounded-full text-xs md:text-sm shadow-lg z-20 border-2 border-black/50">3</div>
       </div>
     );
-    return <span className="font-mono text-xl md:text-2xl text-white/20">{(index + 1).toString().padStart(2, '0')}</span>;
+    return <span className="font-mono text-xl md:text-2xl text-white/50">{(index + 1).toString().padStart(2, '0')}</span>;
   };
 
   return (
@@ -151,29 +151,53 @@ export default function LeaderboardPage() {
         className="text-center mb-12"
       >
         <h1 className="text-5xl md:text-6xl font-black mb-4 bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 via-pink-400 to-purple-500 pb-2">
-          Leaderboard
+          名人堂排行
         </h1>
-        <p className="text-white/60 text-lg mb-8">The world's most stunning visuals, ranked by you.</p>
+        <p className="text-white/60 text-lg mb-8">全世界最亮眼的瞬間，由您決定排名。</p>
 
         {/* Category Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mb-8 p-1.5 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 w-fit mx-auto">
-          {['All', 'Anime', 'Realistic', 'Pets', 'Landscape'].map((cat) => (
+          {['綜合', '動漫', '寫實', '寵物', '風景', '可愛', '帥氣', '藝術', '人物'].map((cat) => (
             <button
               key={cat}
               onClick={() => {
-                setSelectedCategory(cat);
+                const searchCat = cat === '綜合' ? 'All' : cat;
+                setSelectedCategory(searchCat);
                 setCurrentPage(1); // Reset to page 1
               }}
               className={`
                 px-5 py-2 rounded-xl text-sm font-bold tracking-tight transition-all
-                ${selectedCategory === cat
+                ${(selectedCategory === cat || (selectedCategory === 'All' && cat === '綜合'))
                   ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg'
                   : 'text-white/40 hover:text-white hover:bg-white/5'}
               `}
             >
-              {cat.toUpperCase()}
+              {cat}
             </button>
           ))}
+        </div>
+
+        {/* Share Button for Leaderboard */}
+        <div className="flex justify-center mb-12">
+          <button
+            onClick={() => {
+              const shareText = `快來看看 Beauty-PK 的${selectedCategory === 'All' ? '綜合' : selectedCategory}排行榜！這裡聚集了全世界最亮眼的作品。`;
+              if (navigator.share) {
+                navigator.share({
+                  title: 'Beauty-PK 名人堂',
+                  text: shareText,
+                  url: window.location.href
+                });
+              } else {
+                navigator.clipboard.writeText(`${shareText}\n${window.location.href}`);
+                alert('已複製分享連結至剪貼簿！');
+              }
+            }}
+            className="flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 text-white font-bold rounded-2xl border border-white/10 transition-all"
+          >
+            <Share2 className="w-5 h-5 text-pink-400" />
+            <span>分享此榜單</span>
+          </button>
         </div>
       </motion.div>
 
@@ -248,7 +272,7 @@ export default function LeaderboardPage() {
                         Anonymous
                       </div>
                     )}
-                    <div className="text-[10px] md:text-xs text-white/30 uppercase tracking-[0.2em] font-black">Competitor</div>
+                    <div className="text-[10px] md:text-xs text-white/50 uppercase tracking-[0.2em] font-black">Competitor</div>
                   </div>
 
                   {/* Stats Grid */}
@@ -258,7 +282,7 @@ export default function LeaderboardPage() {
                       <div className={`text-2xl md:text-3xl font-black font-mono tabular-nums tracking-tighter ${index === 0 ? 'text-yellow-400' : index === 1 ? 'text-gray-300' : index === 2 ? 'text-orange-400' : 'text-white/80'}`}>
                         {photo.score.toLocaleString()}
                       </div>
-                      <div className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-[0.15em] font-bold">Elo Rating</div>
+                      <div className="text-[9px] md:text-[10px] text-white/50 uppercase tracking-[0.15em] font-bold">Elo Rating</div>
                     </div>
 
                     {/* Win Rate (Desktop only for space) */}
@@ -266,7 +290,7 @@ export default function LeaderboardPage() {
                       <div className={`text-lg md:text-xl font-bold font-mono tabular-nums ${winRate >= 50 ? 'text-green-400' : 'text-white/50'}`}>
                         {winRate}%
                       </div>
-                      <div className="text-[9px] md:text-[10px] text-white/30 uppercase tracking-[0.1em] font-semibold">Win Rate</div>
+                      <div className="text-[9px] md:text-[10px] text-white/50 uppercase tracking-[0.1em] font-semibold">Win Rate</div>
                     </div>
                   </div>
                 </motion.div>
@@ -278,8 +302,8 @@ export default function LeaderboardPage() {
         {!loading && photos.length === 0 && (
           <div className="text-center py-20 text-white/50 bg-white/5 rounded-2xl border border-dashed border-white/10">
             <Trophy className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="mb-4">No champions yet.</p>
-            <a href="/upload" className="text-primary hover:text-primary-glow font-bold hover:underline">Be the first to upload!</a>
+            <p className="mb-4">目前尚無排名。</p>
+            <Link href="/upload" className="text-pink-400 hover:text-pink-300 font-bold hover:underline">成為第一個上傳者！</Link>
           </div>
         )}
 
@@ -291,7 +315,7 @@ export default function LeaderboardPage() {
               disabled={currentPage === 1}
               className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition font-medium"
             >
-              Previous
+              上一頁
             </button>
 
             <div className="flex items-center gap-2">
@@ -327,7 +351,7 @@ export default function LeaderboardPage() {
               disabled={currentPage === totalPages}
               className="px-4 py-2 bg-white/5 hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition font-medium"
             >
-              Next
+              下一頁
             </button>
           </div>
         )}
