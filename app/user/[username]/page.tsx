@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
-import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft, Image as ImageIcon, Share2, Award, Star, Swords } from "lucide-react";
+import { Edit, Camera, MapPin, Calendar, Trophy, Target, TrendingUp, ArrowLeft, Image as ImageIcon, Share2, Award, Star, Swords, Shield } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
@@ -55,6 +55,7 @@ export default function UserProfilePage() {
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (username) {
@@ -79,6 +80,11 @@ export default function UserProfilePage() {
       if (profileError) throw profileError;
       setProfile(profileData);
       setIsOwnProfile(user?.id === profileData.id);
+
+      // Check if user is admin
+      if (user && user.id === profileData.id) {
+        setIsAdmin(profileData.role === 'admin');
+      }
 
       // Fetch user's photos
       const { data: photosData, error: photosError } = await supabase
@@ -252,13 +258,25 @@ export default function UserProfilePage() {
                 </div>
 
                 {isOwnProfile && (
-                  <Link
-                    href="/profile/edit"
-                    className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span className="hidden sm:inline">編輯個人檔案</span>
-                  </Link>
+                  <div className="flex gap-2">
+                    <Link
+                      href="/profile/edit"
+                      className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" />
+                      <span className="hidden sm:inline">編輯個人檔案</span>
+                    </Link>
+
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-500 rounded-lg flex items-center gap-2 font-bold hover:shadow-[0_0_20px_rgba(236,72,153,0.4)] transition"
+                      >
+                        <Shield className="w-4 h-4" />
+                        <span className="hidden sm:inline">管理員後台</span>
+                      </Link>
+                    )}
+                  </div>
                 )}
               </div>
 
