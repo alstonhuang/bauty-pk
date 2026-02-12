@@ -127,11 +127,19 @@ export default function UserProfilePage() {
         .eq("user_id", profileData.id);
 
       if (!achievementError && achievementData) {
-        const mappedAchievements = achievementData.map((item: any) => ({
-          earned_at: item.earned_at,
-          ...item.achievements
-        }));
-        console.log("Fetched achievements for profile:", mappedAchievements);
+        const mappedAchievements = achievementData.map((item: any) => {
+          // Handle both object and array return from Supabase relations
+          const achievementBase = Array.isArray(item.achievements)
+            ? item.achievements[0]
+            : item.achievements;
+
+          return {
+            earned_at: item.earned_at,
+            ...achievementBase
+          };
+        }).filter(a => a.id); // Ensure we have a valid achievement
+
+        console.log("Mapped achievements for profile:", mappedAchievements);
         setAchievements(mappedAchievements);
       } else if (achievementError) {
         console.error("Achievement fetch error:", achievementError);
